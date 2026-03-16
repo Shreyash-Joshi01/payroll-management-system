@@ -15,13 +15,15 @@ const EmployeeLogin = () => {
     const logToast = toast.loading("Verifying member ID...");
 
     try {
-      const res = await fetch("http://localhost:5000/loginEmployee", {
+      const res = await fetch(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000'}/auth/employee/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
       if (data.success) {
+        localStorage.setItem('token', data.session.access_token);
+        localStorage.setItem('userData', JSON.stringify(data.employee));
         toast.success(`Welcome, ${data.employee.first_name}`, { id: logToast });
         navigate("/employee-dashboard", { state: { employee: data.employee } });
       } else {
@@ -46,52 +48,52 @@ const EmployeeLogin = () => {
         </button>
 
         <div className="login-header">
-             <div className="login-icon" style={{ backgroundColor: 'var(--accent-light)', color: 'var(--accent)' }}>
-                <FiUser size={32} />
-             </div>
-             <h2 className="login-title">Staff Portal</h2>
-             <p className="login-subtitle">Access your automated payroll profile.</p>
+          <div className="login-icon" style={{ backgroundColor: 'var(--accent-light)', color: 'var(--accent)' }}>
+            <FiUser size={32} />
+          </div>
+          <h2 className="login-title">Staff Portal</h2>
+          <p className="login-subtitle">Access your automated payroll profile.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">
           <div className="form-group">
             <label className="form-label">Email Address</label>
             <div className="input-wrapper">
-                <FiUser className="input-icon" />
-                <input
-                    className="form-input"
-                    type="email"
-                    placeholder="name@company.com"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    required
-                />
+              <FiUser className="input-icon" />
+              <input
+                className="form-input"
+                type="email"
+                placeholder="name@company.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
+              />
             </div>
           </div>
 
           <div className="form-group">
             <label className="form-label">Password</label>
             <div className="input-wrapper">
-                <FiLock className="input-icon" />
-                <input
-                    className="form-input"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    required
-                />
+              <FiLock className="input-icon" />
+              <input
+                className="form-input"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+              />
             </div>
           </div>
 
           <div className="form-action" style={{ marginTop: '2rem' }}>
             <button type="submit" disabled={loading} className="btn btn-primary">
-                {loading ? "Synchronizing..." : "Sign In to Dashboard"}
+              {loading ? "Synchronizing..." : "Sign In to Dashboard"}
             </button>
           </div>
         </form>
       </div>
-      
+
       <p className="login-footer">
         Powered by <span className="white-text">Finest Digital Infrastructure</span>
       </p>

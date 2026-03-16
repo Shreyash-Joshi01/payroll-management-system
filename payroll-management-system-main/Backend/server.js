@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
-dotenv.config();
+import path from "path";
+dotenv.config({ path: path.resolve("../.env") });
 import express from "express";
 import cors from "cors";
 import pkg from "body-parser";
@@ -14,6 +15,15 @@ const app = express(); // ✅ Initialize app here, before using it
 app.use(cors());
 app.use(json());
 
+// Request Logger (Claude Opus Style - Observability)
+app.use((req, res, next) => {
+    const timestamp = new Date().toISOString();
+    res.on('finish', () => {
+        console.log(`[${timestamp}] ${req.method} ${req.url} - ${res.statusCode}`);
+    });
+    next();
+});
+
 // Add CSP headers
 app.use((req, res, next) => {
     res.setHeader(
@@ -23,11 +33,63 @@ app.use((req, res, next) => {
     next();
 });
 
-// Routes
-app.use("/", employeeRoutes); // ✅ Now app is initialized before using it
+// Health Check & Diagnostics
+app.get("/", (req, res) => res.json({ status: "alive", message: "Payroll Backend Core is Active", port: 5005 }));
+app.get("/sys/health", (req, res) => res.json({ status: "alive", node: "Payroll Core v1.0.42" }));
+
+// Login Routes (Consolidated for Reliability)
+app.post("/auth/admin/login", async (req, res) => {
+    const { email, password } = req.body;
+    try {
+        const { data, error } = await db.auth.signInWithPassword({ email, password });
+        if (error) return res.status(401).json({ success: false, message: error.message });
+
+        if (data.user.user_metadata?.role !== 'Admin') {
+            await db.auth.signOut();
+            return res.status(403).json({ success: false, message: "Admin privileges required" });
+        }
+        res.json({
+            success: true,
+            token: data.session.access_token,
+            role: 'admin',
+            user: data.user
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+app.post("/auth/employee/login", async (req, res) => {
+    const { email, password } = req.body;
+    try {
+        const { data, error } = await db.auth.signInWithPassword({ email, password });
+        if (error) return res.status(401).json({ success: false, message: error.message });
+
+        const { data: employee, error: empError } = await db
+            .from('employees')
+            .select('*, departments(department_name)')
+            .eq('supabase_user_id', data.user.id)
+            .single();
+
+        if (empError || !employee) {
+            return res.status(404).json({ success: false, message: "Employee profile synchronization failed" });
+        }
+        res.json({
+            success: true,
+            token: data.session.access_token,
+            role: 'employee',
+            user: employee
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// Other Routes
+app.use("/", employeeRoutes);
 
 // Start the server
-const PORT = 5000;
+const PORT = process.env.BACKEND_PORT || 5000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });

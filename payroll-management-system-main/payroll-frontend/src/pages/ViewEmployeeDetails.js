@@ -8,7 +8,10 @@ const PayslipModal = ({ employeeId, onClose }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`http://localhost:5000/getPayslip/${employeeId}`)
+    const token = localStorage.getItem('token');
+    fetch(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000'}/getPayslip/${employeeId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
       .then(res => res.json())
       .then(data => {
         setPayslip(data.payslip);
@@ -47,7 +50,7 @@ const PayslipModal = ({ employeeId, onClose }) => {
         <button className="absolute top-6 right-6 text-text-muted hover:text-white transition-colors" onClick={onClose}>
           <FiX size={24} />
         </button>
-        
+
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-primary-10 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <FiFileText size={32} className="text-primary" />
@@ -90,7 +93,10 @@ const ViewEmployeeDetails = () => {
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
-    fetch("http://localhost:5000/getAllEmployees")
+    const token = localStorage.getItem('token');
+    fetch(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000'}/getAllEmployees`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
       .then(res => res.json())
       .then(data => {
         setEmployees(data.employees || []);
@@ -102,15 +108,15 @@ const ViewEmployeeDetails = () => {
       });
   }, []);
 
-  const filteredEmployees = employees.filter(emp => 
+  const filteredEmployees = employees.filter(emp =>
     `${emp.first_name} ${emp.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
     emp.job_title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) return (
     <div className="flex flex-col items-center justify-center py-20 animate-pulse">
-        <FiUsers size={48} className="text-text-muted mb-4" />
-        <p className="text-text-muted">Fetching latest records...</p>
+      <FiUsers size={48} className="text-text-muted mb-4" />
+      <p className="text-text-muted">Fetching latest records...</p>
     </div>
   );
 
@@ -121,15 +127,20 @@ const ViewEmployeeDetails = () => {
           <h2 className="text-2xl font-bold text-white">Employee Directory</h2>
           <p className="text-text-secondary mt-1">Found {filteredEmployees.length} registered members.</p>
         </div>
-        <div className="relative w-full md:w-80">
-          <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" />
-          <input 
-            type="text" 
-            placeholder="Search by name or title..." 
-            className="w-full bg-white-5 border border-white-10 rounded-2xl pl-12 pr-4 py-3 text-white focus:outline-none focus:border-primary transition-all"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="relative w-full md:w-80 group">
+          <div className="absolute inset-x-0 bottom-0 h-[1px] bg-gradient-to-r from-transparent via-cyan to-transparent opacity-0 group-focus-within:opacity-100 transition-all duration-500 shadow-[0_1px_10px_rgba(0,240,255,0.3)]"></div>
+          <div className="relative flex items-center bg-midnight border-b border-neon px-4 py-3 group-focus-within:border-cyan transition-all duration-300">
+            <div className="flex items-center justify-center mr-3 text-muted group-focus-within:text-cyan transition-colors">
+              <FiSearch size={18} />
+            </div>
+            <input
+              type="text"
+              placeholder="SEARCH DIRECTORY..."
+              className="w-full bg-transparent !bg-none border-none text-white focus:outline-none placeholder:text-muted text-[10px] font-black tracking-[0.2em]"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
         </div>
       </div>
 
@@ -137,41 +148,40 @@ const ViewEmployeeDetails = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="bg-white-5 text-xs text-text-muted uppercase tracking-widest">
+              <tr className="bg-midnight text-xs text-secondary uppercase tracking-widest border-b border-neon">
                 <th className="px-6 py-5 font-black">ID</th>
                 <th className="px-6 py-5 font-black">Member</th>
                 <th className="px-6 py-5 font-black">Department</th>
                 <th className="px-6 py-5 font-black">Salary</th>
-                <th className="px-6 py-5 font-black">Status</th>
+                <th className="px-6 py-5 font-black text-cyan">Status</th>
                 <th className="px-6 py-5 font-black text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white-5">
+            <tbody className="divide-y divide-neon">
               {filteredEmployees.map(emp => (
                 <tr key={emp.employee_id} className="text-sm text-text-secondary hover:bg-white-5 transition-colors group">
-                  <td className="px-6 py-5 font-mono text-xs">{emp.employee_id}</td>
+                  <td className="px-6 py-5 font-mono text-xs text-cyan opacity-70">{emp.employee_id}</td>
                   <td className="px-6 py-5">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-primary-20 flex items-center justify-center text-primary font-bold text-xs">
+                      <div className="w-8 h-8 rounded-full bg-midnight border border-neon flex items-center justify-center text-secondary font-bold text-xs shadow-neon">
                         {emp.first_name[0]}{emp.last_name[0]}
                       </div>
                       <div>
-                        <p className="text-white font-bold">{emp.first_name} {emp.last_name}</p>
-                        <p className="text-xs">{emp.job_title}</p>
+                        <p className="text-white font-black tracking-tight">{emp.first_name} {emp.last_name}</p>
+                        <p className="text-xs text-secondary">{emp.job_title}</p>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-5">{emp.department_name || "N/A"}</td>
                   <td className="px-6 py-5 font-medium text-white">₹{emp.salary.toLocaleString()}</td>
                   <td className="px-6 py-5">
-                    <span className={`px-2 py-1 rounded-md text-xs font-black uppercase ${
-                      emp.status === 'Active' ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'
-                    }`}>
+                    <span className={`px-2 py-1 rounded-md text-xs font-black uppercase ${emp.status === 'Active' ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'
+                      }`}>
                       {emp.status}
                     </span>
                   </td>
                   <td className="px-6 py-5 text-right">
-                    <button 
+                    <button
                       className="text-primary hover:text-primary-hover font-bold text-xs uppercase tracking-tight transition-colors"
                       onClick={() => setShowPayslip(emp.employee_id)}
                     >

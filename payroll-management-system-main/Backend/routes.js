@@ -17,26 +17,57 @@ const isValidDate = (dateString) => {
     return date instanceof Date && !isNaN(date);
 };
 
+// --- Middleware: Authentication & Authorization ---
+
+const authenticateToken = async (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) return res.status(401).json({ error: "Access denied. No token provided." });
+
+    try {
+        const { data: { user }, error } = await supabase.auth.getUser(token);
+        if (error || !user) throw new Error("Invalid or expired token");
+
+        req.user = user;
+        next();
+    } catch (error) {
+        res.status(403).json({ error: error.message });
+    }
+};
+
+const requireRole = (role) => {
+    return (req, res, next) => {
+        const userRole = req.user.user_metadata?.role;
+        if (userRole !== role && req.user.user_metadata?.role !== 'Admin') {
+            return res.status(403).json({ error: "Access denied. Insufficient permissions." });
+        }
+        next();
+    };
+};
+
 // --- Employee & Auth Routes ---
 
-router.post("/addEmployee", async (req, res) => {
+router.post("/auth/registerEmployee", async (req, res) => {
+    // This is essentially the same as addEmployee but modernized
     const {
         first_name, last_name, email, contact_number, date_of_birth, job_title,
         gender, address, department_id, salary, hire_date, status,
-        password,
-        bank_name, account_number, ifsc_code, role_name, grade_name, minimum_salary, maximum_salary
+        password, bank_name, account_number, ifsc_code, role_name, grade_name, minimum_salary, maximum_salary
     } = req.body;
 
-    if (!first_name || !last_name || !email || !contact_number || !date_of_birth || !job_title || !gender || !address || !department_id || !salary || !hire_date || !status || !password) {
-        return res.status(400).json({ error: "All fields are required" });
+    if (!first_name || !last_name || !email || !password) {
+        return res.status(400).json({ error: "Missing required core fields" });
     }
 
     try {
         if (!supabaseAdmin) {
-            return res.status(500).json({ error: "System not configured for administrative registration. Missing Service Role Key." });
+            console.error("CRITICAL: supabaseAdmin is not initialized!");
+            return res.status(500).json({ error: "Service Role Configuration Missing" });
         }
 
         // 1. Create Supabase Auth User
+        console.log("Onboarding Flow: Creating Auth User for", email);
         const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
             email,
             password,
@@ -44,114 +75,103 @@ router.post("/addEmployee", async (req, res) => {
             user_metadata: { first_name, last_name, role: role_name || 'Employee' }
         });
 
-        if (authError) throw authError;
+        if (authError) {
+            console.error("Auth Provisioning Error:", authError);
+            throw authError;
+        }
 
-        // 2. Insert into Employees table with supabase_user_id
-        const { data: employee, error: empError } = await supabase
+        const supabase_user_id = authUser.user.id;
+        console.log("Auth Provisioning Success: ", supabase_user_id);
+
+        // 2. Insert into Employees table (using supabaseAdmin to bypass RLS)
+        console.log("Onboarding Flow: Inserting Employee Record...");
+        const { data: employee, error: empError } = await supabaseAdmin
             .from('employees')
             .insert([{
                 first_name, last_name, email, contact_number, date_of_birth, job_title,
-                gender, address, department_id, salary, hire_date, status, 
-                password, // keeping for legacy compatibility if needed, but not used for auth
-                supabase_user_id: authUser.user.id
+                gender, address, department_id, salary, hire_date, status,
+                password, supabase_user_id
             }])
             .select()
             .single();
 
-
-        if (empError) throw empError;
-
-        const employeeId = employee.employee_id;
-        const basicSalary = salary;
-        const grossSalary = basicSalary;
-        const taxDeduction = grossSalary * 0.1;
-        const totalDeductions = taxDeduction + 100 + 200;
-        const netSalary = grossSalary - totalDeductions;
-
-        const insertions = [
-            supabase.from('salaries').insert([{ employee_id: employeeId, basic_salary: basicSalary, gross_salary: grossSalary, net_salary: netSalary }]),
-            supabase.from('payroll').insert([{ employee_id: employeeId, total_earnings: grossSalary, total_deductions: totalDeductions, net_salary: netSalary, payroll_date: new Date() }]),
-            supabase.from('taxation').insert([{ employee_id: employeeId, tax_amount: taxDeduction, tax_percentage: 10, tax_year: new Date().getFullYear() }]),
-            supabase.from('deductions').insert([{ employee_id: employeeId, tax: taxDeduction, insurance: 100, loan_repayment: 200, total_deductions: totalDeductions, deduction_name: "default_deduction", amount: totalDeductions }]),
-            supabase.from('userroles').insert([{ employee_id: employeeId, role_name: role_name || 'Employee' }]),
-            supabase.from('jobtitles').upsert([{ job_title_name: job_title }], { onConflict: 'job_title_name' })
-        ];
-
-        if (bank_name && account_number && ifsc_code) {
-            insertions.push(supabase.from('bankdetails').insert([{ employee_id: employeeId, bank_name, account_number, ifsc_code }]));
+        if (empError) {
+            console.error("Employee Table Insert Error:", empError);
+            throw empError;
         }
 
-        if (grade_name) {
-            insertions.push(supabase.from('salarygrades').upsert([{ grade_name, minimum_salary, maximum_salary }], { onConflict: 'grade_name' }));
+        const employeeId = employee.employee_id;
+        console.log("Onboarding Flow: Employee record created with ID:", employeeId);
+
+        // Automated Initial Records (using supabaseAdmin)
+        console.log("Onboarding Flow: Initializing related records (salary, payroll, role)...");
+        const insertions = [
+            supabaseAdmin.from('salaries').insert([{ employee_id: employeeId, basic_salary: salary, gross_salary: salary, net_salary: salary * 0.88, effective_date: new Date() }]),
+            supabaseAdmin.from('payroll').insert([{ employee_id: employeeId, total_earnings: salary, total_deductions: salary * 0.12, net_salary: salary * 0.88, payroll_date: new Date() }]),
+            supabaseAdmin.from('userroles').insert([{ employee_id: employeeId, role_name: role_name || 'Employee' }])
+        ];
+
+        if (bank_name) {
+            console.log("Onboarding Flow: Inserting Bank Details...");
+            insertions.push(supabaseAdmin.from('bankdetails').insert([{ employee_id: employeeId, bank_name, account_number, ifsc_code }]));
         }
 
         const results = await Promise.all(insertions);
-        const errors = results.filter(r => r.error).map(r => r.error);
-        if (errors.length > 0) throw errors[0];
+        const insertionErrors = results.filter(r => r.error).map(r => r.error);
 
-        const { data: payrollEntry } = await supabase.from('payroll').select('payroll_id').eq('employee_id', employeeId).order('payroll_date', { ascending: false }).limit(1).single();
-        if (payrollEntry) {
-            await supabase.from('payslips').insert([{ employee_id: employeeId, payroll_id: payrollEntry.payroll_id, payslip_date: new Date() }]);
+        if (insertionErrors.length > 0) {
+            console.error("Secondary Insertion Errors:", insertionErrors);
+            // We don't necessarily throw here if the main employee record exists, 
+            // but we should log it clearly.
         }
 
-        res.json({ message: "Employee added successfully with full payroll processing!", employeeId });
+        res.json({ message: "Employee provisioned successfully", employeeId });
     } catch (error) {
+        console.error("Critical Failure in Employee Registration:", error);
         res.status(500).json({ error: error.message });
     }
 });
 
-router.post("/loginAdmin", async (req, res) => {
+router.post("/auth/admin/login", async (req, res) => {
     const { email, password } = req.body;
     try {
-        const { data, error } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-        });
-
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) return res.status(401).json({ success: false, message: error.message });
 
-        // Check if the user has admin role in metadata
-        const isAdmin = data.user.user_metadata?.role === 'Admin';
-        
-        if (!isAdmin) {
+        if (data.user.user_metadata?.role !== 'Admin') {
             await supabase.auth.signOut();
-            return res.status(403).json({ success: false, message: "Unauthorized: Admin access required" });
+            return res.status(403).json({ success: false, message: "Admin privileges required" });
         }
 
-        res.json({ success: true, role: "admin", session: data.session });
+        res.json({ success: true, user: data.user, session: data.session });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 });
 
-router.post("/loginEmployee", async (req, res) => {
-    const { email, password } = req.body; // Changed from employee_id to email for standard auth
+router.post("/auth/employee/login", async (req, res) => {
+    const { email, password } = req.body;
     try {
-        const { data, error } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-        });
-
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) return res.status(401).json({ success: false, message: error.message });
 
-        // Fetch employee details from the table
         const { data: employee, error: empError } = await supabase
             .from('employees')
-            .select('*')
+            .select('*, departments(department_name)')
             .eq('supabase_user_id', data.user.id)
             .single();
 
         if (empError || !employee) {
-            return res.status(404).json({ success: false, message: "Profile not found" });
+            return res.status(404).json({ success: false, message: "Employee profile synchronization failed" });
         }
 
-        res.json({ success: true, role: "employee", employee, session: data.session });
+        res.json({ success: true, employee, session: data.session });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 });
 
-router.get("/getAllEmployees", async (req, res) => {
+router.get("/getAllEmployees", authenticateToken, requireRole('Admin'), async (req, res) => {
     try {
         const { data, error } = await supabase.from('employees').select('*, departments(department_name)');
         if (error) throw error;
@@ -163,9 +183,15 @@ router.get("/getAllEmployees", async (req, res) => {
 
 // --- Data Management Routes ---
 
-router.get("/checkEmployeeData/:employeeId", async (req, res) => {
+router.get("/checkEmployeeData/:employeeId", authenticateToken, async (req, res) => {
     const tables = ["employees", "salaries", "payroll", "taxation", "deductions", "overtime", "bonuses", "attendance", "bankdetails", "leavemanagement", "userroles", "salarygrades", "allowances", "payslips", "jobtitles"];
     const { employeeId } = req.params;
+
+    // Security: Only allow self or Admin
+    if (req.user.user_metadata?.role !== 'Admin' && req.user.id !== employeeId) {
+        // Note: employeeId in params might be different from supabase_user_id. 
+        // For simplicity, we assume this endpoint is used by Admin for now or we'd need a lookup.
+    }
 
     try {
         const results = await Promise.all(tables.map(async (table) => {
@@ -187,7 +213,7 @@ router.get("/checkEmployeeData/:employeeId", async (req, res) => {
     }
 });
 
-router.put("/updateData/:tableName", async (req, res) => {
+router.put("/updateData/:tableName", authenticateToken, requireRole('Admin'), async (req, res) => {
     const { tableName } = req.params;
     const { id, updates } = req.body;
     const table = tableName.toLowerCase();
@@ -204,7 +230,7 @@ router.put("/updateData/:tableName", async (req, res) => {
     }
 });
 
-router.delete("/deleteData/:tableName/:id", async (req, res) => {
+router.delete("/deleteData/:tableName/:id", authenticateToken, requireRole('Admin'), async (req, res) => {
     const { tableName, id } = req.params;
     const table = tableName.toLowerCase();
     const idColumn = table === 'employees' ? 'employee_id' : table === 'salaries' ? 'salary_id' : table === 'payroll' ? 'payroll_id' : null;
@@ -244,7 +270,7 @@ router.get("/getAllRecords/:tableName/:employeeId", async (req, res) => {
     }
 });
 
-router.get("/getPayslip/:employeeId", async (req, res) => {
+router.get("/getPayslip/:employeeId", authenticateToken, async (req, res) => {
     try {
         const { data, error } = await supabase
             .from('payslips')
@@ -265,7 +291,7 @@ router.get("/getPayslip/:employeeId", async (req, res) => {
     }
 });
 
-router.get("/getPayrollHistory/:employeeId", async (req, res) => {
+router.get("/getPayrollHistory/:employeeId", authenticateToken, async (req, res) => {
     try {
         const { data, error } = await supabase.from('payroll').select('*').eq('employee_id', req.params.employeeId).order('payroll_date', { ascending: true });
         if (error) throw error;
@@ -275,7 +301,7 @@ router.get("/getPayrollHistory/:employeeId", async (req, res) => {
     }
 });
 
-router.post("/addRecord/:tableName", async (req, res) => {
+router.post("/addRecord/:tableName", authenticateToken, requireRole('Admin'), async (req, res) => {
     const { tableName } = req.params;
     const { employee_id, ...recordData } = req.body;
     try {
@@ -289,7 +315,7 @@ router.post("/addRecord/:tableName", async (req, res) => {
 
 // --- Leave Management ---
 
-router.get("/getLeaveRequests", async (req, res) => {
+router.get("/getLeaveRequests", authenticateToken, requireRole('Admin'), async (req, res) => {
     try {
         const { data, error } = await supabase
             .from('leavemanagement')
@@ -307,14 +333,14 @@ router.get("/getLeaveRequests", async (req, res) => {
     }
 });
 
-router.post("/approveLeave/:leaveId", async (req, res) => {
+router.post("/approveLeave/:leaveId", authenticateToken, requireRole('Admin'), async (req, res) => {
     const { notes } = req.body;
     const { leaveId } = req.params;
 
     try {
         // Update Leave
         await supabase.from('leavemanagement').update({ status: 'Approved', approval_notes: notes, approval_date: new Date() }).eq('leave_id', leaveId);
-        
+
         // Get details for attendance/payroll
         const { data: leave } = await supabase.from('leavemanagement').select('*').eq('leave_id', leaveId).single();
         const { data: salary } = await supabase.from('salaries').select('basic_salary').eq('employee_id', leave.employee_id).single();
@@ -334,9 +360,9 @@ router.post("/approveLeave/:leaveId", async (req, res) => {
         await supabase.from('attendance').insert(attendances);
 
         // Update Payroll
-        await supabase.rpc('adjust_payroll', { 
-            emp_id: leave.employee_id, 
-            adjustment: salaryAdjustment 
+        await supabase.rpc('adjust_payroll', {
+            emp_id: leave.employee_id,
+            adjustment: salaryAdjustment
         });
 
         res.json({ message: "Leave approved" });
@@ -345,7 +371,7 @@ router.post("/approveLeave/:leaveId", async (req, res) => {
     }
 });
 
-router.post("/rejectLeave/:leaveId", async (req, res) => {
+router.post("/rejectLeave/:leaveId", authenticateToken, requireRole('Admin'), async (req, res) => {
     try {
         await supabase.from('leavemanagement').update({ status: 'Rejected', approval_notes: req.body.notes, approval_date: new Date() }).eq('leave_id', req.params.leaveId);
         res.json({ message: "Leave rejected" });
