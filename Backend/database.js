@@ -1,35 +1,27 @@
-import mysql from "mysql";
+import { createClient } from '@supabase/supabase-js';
+import dotenv from "dotenv";
+import path from "path";
+dotenv.config({ path: path.resolve("../.env") });
 
-const db = mysql.createConnection({
-    host: "localhost",      // Your MySQL server (default is localhost)
-    user: "root",           // Your MySQL username
-    password: "",           // Your MySQL password (leave blank if none)
-    database: ""  // Replace with your actual database name
-});
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_KEY;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-db.connect((err) => {
-    if (err) {
-        console.error("Database Connection Failed: ", err);
-        return;
+if (!supabaseUrl || !supabaseKey) {
+  console.error("Missing Supabase credentials in .env file");
+}
+
+export const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Use service role key for admin actions (like creating users)
+export const supabaseAdmin = supabaseServiceKey
+  ? createClient(supabaseUrl, supabaseServiceKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
     }
-    console.log("Connected to MySQL Database");
-});
+  })
+  : null;
 
-// Helper functions for transactions
-export const beginTransaction = (callback) => {
-    db.beginTransaction(callback);
-};
-
-export const query = (sql, values, callback) => {
-    db.query(sql, values, callback);
-};
-
-export const rollback = (callback) => {
-    db.rollback(callback);
-};
-
-export const commit = (callback) => {
-    db.commit(callback);
-};
-
-export default db;
+// Export
+export default supabase;

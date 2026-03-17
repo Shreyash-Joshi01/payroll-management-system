@@ -1,150 +1,172 @@
 import React, { useState } from "react";
+import toast from "react-hot-toast";
+import { FiUser, FiMail, FiPhone, FiCalendar, FiBriefcase, FiMapPin, FiCreditCard, FiLock } from "react-icons/fi";
 
 const initialState = {
-  first_name: "",
-  last_name: "",
-  email: "",
-  contact_number: "",
-  date_of_birth: "",
-  job_title: "",
-  gender: "Male",
-  address: "",
-  department_id: "",
-  salary: "",
-  hire_date: "",
-  status: "Active",
-  password: "",
-  bank_name: "",
-  account_number: "",
-  ifsc_code: "",
-  role_name: "Employee",
-  grade_name: "",
-  minimum_salary: "",
-  maximum_salary: ""
+  first_name: "", last_name: "", email: "", password: "", confirm_password: "",
+  contact_number: "", date_of_birth: "",
+  job_title: "", gender: "Male", address: "", department_id: "", salary: "",
+  hire_date: "", status: "Active", bank_name: "",
+  account_number: "", ifsc_code: "", role_name: "Employee",
+  grade_name: "", minimum_salary: "", maximum_salary: ""
 };
-
-// Utility to convert MM/DD/YYYY or DD/MM/YYYY to YYYY-MM-DD
-function toYYYYMMDD(val) {
-  if (!val) return "";
-  // If already in YYYY-MM-DD, return as is
-  if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
-  // Try MM/DD/YYYY
-  if (/^\d{2}\/\d{2}\/\d{4}$/.test(val)) {
-    const [mm, dd, yyyy] = val.split("/");
-    return `${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
-  }
-  // Try DD/MM/YYYY
-  if (/^\d{2}-\d{2}-\d{4}$/.test(val)) {
-    const [dd, mm, yyyy] = val.split("-");
-    return `${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
-  }
-  return val;
-}
 
 const AddEmployee = () => {
   const [form, setForm] = useState(initialState);
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
 
   const handleChange = e => {
-    const { name, value, type } = e.target;
-    if (["date_of_birth", "hire_date"].includes(name)) {
-      setForm({ ...form, [name]: toYYYYMMDD(value) });
-    } else {
-      setForm({ ...form, [name]: value });
-    }
-  };
-
-  const validate = () => {
-    for (const key in initialState) {
-      if (form[key] === "" || form[key] === undefined) {
-        return false;
-      }
-    }
-    return true;
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
   };
 
   const handleSubmit = async e => {
     e.preventDefault();
-    setMessage("");
-    setError("");
-    if (!validate()) {
-      setError("All fields are required.");
-      return;
+
+    if (form.password.length < 6) {
+      return toast.error("Password must be at least 6 characters.");
     }
+    if (form.password !== form.confirm_password) {
+      return toast.error("Passwords do not match.");
+    }
+
     setLoading(true);
+    const loadingToast = toast.loading("Registering employee...");
+
     try {
-      const res = await fetch("http://localhost:5000/addEmployee", {
+      const { confirm_password, ...submitData } = form;
+      const res = await fetch(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000'}/auth/registerEmployee`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...form,
+          ...submitData,
           department_id: Number(form.department_id),
           salary: Number(form.salary),
           minimum_salary: Number(form.minimum_salary),
           maximum_salary: Number(form.maximum_salary)
         }),
       });
+
       const data = await res.json();
       if (res.ok) {
-        setMessage("Employee added successfully!");
+        toast.success(data.emailNote || "Employee registered! Credentials emailed.", { id: loadingToast });
         setForm(initialState);
       } else {
-        setError(data.error || "Failed to add employee");
+        toast.error(data.error || "Failed to add employee", { id: loadingToast });
       }
     } catch (err) {
-      setError("Server error");
+      toast.error("Network error. Please try again.", { id: loadingToast });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="bg-card rounded-xl shadow-xl p-8 border-t-8 border-green w-full animate-slide-up max-w-3xl mx-auto font-display">
-      <h2 className="text-2xl font-extrabold text-green mb-4 text-center font-display">Add Employee</h2>
-      <form className="flex flex-col gap-4 font-body" onSubmit={handleSubmit}>
-        <div className="flex gap-4">
-          <input className="border rounded px-3 py-2 flex-1" name="first_name" placeholder="First Name" value={form.first_name} onChange={handleChange} required />
-          <input className="border rounded px-3 py-2 flex-1" name="last_name" placeholder="Last Name" value={form.last_name} onChange={handleChange} required />
+    <div className="max-w-4xl mx-auto">
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-white">Register New Employee</h2>
+        <p className="text-text-secondary mt-1">Fill in the details to create a new employee profile and payroll record.</p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-8">
+        {/* Personal Information */}
+        <section className="space-y-4">
+          <h3 className="text-sm font-bold text-primary uppercase tracking-widest flex items-center gap-2">
+            <FiUser /> Personal Details
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input label="First Name" name="first_name" value={form.first_name} onChange={handleChange} required />
+            <Input label="Last Name" name="last_name" value={form.last_name} onChange={handleChange} required />
+            <Input label="Email" name="email" type="email" value={form.email} onChange={handleChange} required />
+            <Input label="Contact Number" name="contact_number" value={form.contact_number} onChange={handleChange} required />
+            <Input label="Password" name="password" type="password" value={form.password} onChange={handleChange} required placeholder="Min 6 characters" />
+            <Input label="Confirm Password" name="confirm_password" type="password" value={form.confirm_password} onChange={handleChange} required />
+            <Input label="Date of Birth" name="date_of_birth" type="date" value={form.date_of_birth} onChange={handleChange} required />
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-text-muted uppercase px-1">Gender</label>
+              <select
+                name="gender"
+                value={form.gender}
+                onChange={handleChange}
+                className="w-full bg-elevated border border-neon rounded-xl px-4 py-3 text-white focus:outline-none focus:border-accent-primary transition-all"
+              >
+<<<<<<< HEAD:payroll-frontend/src/pages/AddEmployee.js
+                <option value="Male" className="bg-midnight text-white">Male</option>
+                <option value="Female" className="bg-midnight text-white">Female</option>
+                <option value="Other" className="bg-midnight text-white">Other</option>
+=======
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+>>>>>>> fb57fde8cf0dbedbb755a4582cd9d2854e4afb27:payroll-management-system-main/payroll-frontend/src/pages/AddEmployee.js
+              </select>
+            </div>
+          </div>
+          <div className="w-full relative">
+            <label className="text-xs font-bold text-text-muted uppercase px-1 mb-1 block">Residential Address</label>
+            <textarea
+              name="address"
+              value={form.address}
+              onChange={handleChange}
+              rows="2"
+              className="w-full bg-white-5 border border-white-10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary transition-all"
+              required
+            />
+          </div>
+        </section>
+
+        {/* Job & Salary Information */}
+        <section className="space-y-4">
+          <h3 className="text-sm font-bold text-primary uppercase tracking-widest flex items-center gap-2">
+            <FiBriefcase /> Employment & Salary
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Input label="Job Title" name="job_title" value={form.job_title} onChange={handleChange} required />
+            <Input label="Department ID" name="department_id" type="number" value={form.department_id} onChange={handleChange} required />
+            <Input label="Basic Salary" name="salary" type="number" value={form.salary} onChange={handleChange} required />
+            <Input label="Hire Date" name="hire_date" type="date" value={form.hire_date} onChange={handleChange} required />
+            <Input label="Grade Name" name="grade_name" value={form.grade_name} onChange={handleChange} required />
+            <Input label="Role" name="role_name" value={form.role_name} onChange={handleChange} required />
+            <Input label="Min Salary Range" name="minimum_salary" type="number" value={form.minimum_salary} onChange={handleChange} required />
+            <Input label="Max Salary Range" name="maximum_salary" type="number" value={form.maximum_salary} onChange={handleChange} required />
+
+          </div>
+        </section>
+
+        {/* Bank Information */}
+        <section className="space-y-4">
+          <h3 className="text-sm font-bold text-primary uppercase tracking-widest flex items-center gap-2">
+            <FiCreditCard /> Bank Details
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Input label="Bank Name" name="bank_name" value={form.bank_name} onChange={handleChange} required />
+            <Input label="Account Number" name="account_number" value={form.account_number} onChange={handleChange} required />
+            <Input label="IFSC Code" name="ifsc_code" value={form.ifsc_code} onChange={handleChange} required />
+          </div>
+        </section>
+
+        <div className="pt-6">
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-4 bg-accent-primary hover:bg-accent-secondary text-white rounded-2xl font-black shadow-neon transition-all transform hover:-translate-y-1 disabled:opacity-50 disabled:transform-none uppercase tracking-widest"
+          >
+            {loading ? "Processing..." : "Confirm Employee Registration"}
+          </button>
         </div>
-        <input className="border rounded px-3 py-2" name="email" placeholder="Email" value={form.email} onChange={handleChange} required />
-        <input className="border rounded px-3 py-2" name="contact_number" placeholder="Contact Number" value={form.contact_number} onChange={handleChange} required />
-        <input className="border rounded px-3 py-2" name="date_of_birth" type="date" value={form.date_of_birth} onChange={handleChange} placeholder="Date of Birth" style={{ color: '#333' }} required />
-        <input className="border rounded px-3 py-2" name="job_title" placeholder="Job Title" value={form.job_title} onChange={handleChange} required />
-        <select className="border rounded px-3 py-2" name="gender" value={form.gender} onChange={handleChange} required>
-          <option value="Male">Male</option>
-          <option value="Female">Female</option>
-          <option value="Other">Other</option>
-        </select>
-        <input className="border rounded px-3 py-2" name="address" placeholder="Address" value={form.address} onChange={handleChange} required />
-        <input className="border rounded px-3 py-2" name="department_id" placeholder="Department ID" value={form.department_id} onChange={handleChange} required />
-        <input className="border rounded px-3 py-2" name="salary" type="number" placeholder="Salary" value={form.salary} onChange={handleChange} required />
-        <input className="border rounded px-3 py-2" name="hire_date" type="date" value={form.hire_date} onChange={handleChange} placeholder="Hire Date" style={{ color: '#333' }} required />
-        <select className="border rounded px-3 py-2" name="status" value={form.status} onChange={handleChange} required>
-          <option value="Active">Active</option>
-          <option value="Inactive">Inactive</option>
-        </select>
-        <input className="border rounded px-3 py-2" name="password" type="password" placeholder="Password" value={form.password} onChange={handleChange} required />
-        <div className="flex gap-4">
-          <input className="border rounded px-3 py-2 flex-1" name="bank_name" placeholder="Bank Name" value={form.bank_name} onChange={handleChange} required />
-          <input className="border rounded px-3 py-2 flex-1" name="account_number" placeholder="Account Number" value={form.account_number} onChange={handleChange} required />
-          <input className="border rounded px-3 py-2 flex-1" name="ifsc_code" placeholder="IFSC Code" value={form.ifsc_code} onChange={handleChange} required />
-        </div>
-        <input className="border rounded px-3 py-2" name="role_name" placeholder="Role Name" value={form.role_name} onChange={handleChange} required />
-        <div className="flex gap-4">
-          <input className="border rounded px-3 py-2 flex-1" name="grade_name" placeholder="Grade Name" value={form.grade_name} onChange={handleChange} required />
-          <input className="border rounded px-3 py-2 flex-1" name="minimum_salary" type="number" placeholder="Minimum Salary" value={form.minimum_salary} onChange={handleChange} required />
-          <input className="border rounded px-3 py-2 flex-1" name="maximum_salary" type="number" placeholder="Maximum Salary" value={form.maximum_salary} onChange={handleChange} required />
-        </div>
-        <button type="submit" className="py-2 px-4 bg-green text-dark rounded-lg font-bold shadow hover:bg-accent hover:text-dark transition-colors duration-300" disabled={loading}>
-          {loading ? "Adding..." : "Add Employee"}
-        </button>
-        {message && <div className="text-green-600 text-center">{message}</div>}
-        {error && <div className="text-red-600 text-center">{error}</div>}
       </form>
     </div>
   );
 };
 
-export default AddEmployee; 
+const Input = ({ label, ...props }) => (
+  <div className="flex flex-col gap-1.5">
+    <label className="text-xs font-bold text-text-muted uppercase px-1">{label}</label>
+    <input
+      {...props}
+      className="w-full bg-elevated border border-neon rounded-xl px-4 py-3 text-white placeholder:text-muted focus:outline-none focus:border-accent-primary transition-all"
+    />
+  </div>
+);
+
+export default AddEmployee;

@@ -81,9 +81,9 @@ const AddEmployeeRecords = () => {
                             onChange={(e) => setSelectedEmployee(e.target.value)}
                             className="w-full bg-white-5 border border-white-10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-primary transition-all appearance-none cursor-pointer"
                         >
-                            <option value="" className="bg-midnight text-white">Select an employee...</option>
+                            <option value="" className="bg-bg-sidebar">Select an employee...</option>
                             {employees.map(emp => (
-                                <option key={emp.employee_id} value={emp.employee_id} className="bg-midnight text-white">
+                                <option key={emp.employee_id} value={emp.employee_id} className="bg-bg-sidebar">
                                     {emp.first_name} {emp.last_name} (ID: {emp.employee_id})
                                 </option>
                             ))}

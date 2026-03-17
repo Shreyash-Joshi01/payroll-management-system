@@ -96,12 +96,9 @@ const EmployeeDashboard = () => {
 
                 <button
                     onClick={handleSignOut}
-                    className="mt-auto sidebar-btn"
+                    className="mt-auto flex items-center gap-3 px-4 py-3 text-text-muted hover:text-error transition-colors uppercase text-xs font-black tracking-widest"
                 >
-                    <div className="icon-box" style={{ flexShrink: 0 }}>
-                        <FiLogOut />
-                    </div>
-                    <span className="font-black" style={{ whiteSpace: 'nowrap' }}>Abort Session</span>
+                    <FiLogOut /> Abort Session
                 </button>
             </aside>
 
@@ -187,12 +184,13 @@ const StatCard = ({ icon, label, value }) => (
 const ActionButton = ({ icon, label, onClick, primary }) => (
     <button
         onClick={onClick}
-        className={`sidebar-btn ${primary ? 'active' : ''}`}
+        className={`w-full flex items-center gap-3 px-4 py-4 rounded-lg font-black text-xs uppercase tracking-widest transition-all ${primary
+            ? 'bg-accent text-white shadow-neon hover:shadow-neon-lg'
+            : 'bg-white-5 text-white hover:bg-white-10 border border-white-10 shadow-sm'
+            }`}
     >
-        <div className="icon-box" style={{ flexShrink: 0 }}>
-            {icon}
-        </div>
-        <span className="font-black" style={{ whiteSpace: 'nowrap' }}>{label}</span>
+        {icon}
+        {label}
     </button>
 );
 

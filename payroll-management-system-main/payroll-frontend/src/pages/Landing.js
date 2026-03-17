@@ -39,10 +39,10 @@ const Landing = ({ onAdminClick, onEmployeeClick }) => {
           whileHover={{ y: -10 }}
           onClick={() => onAdminClick()}
           className="glass-card cursor-pointer group flex-1 min-h-[380px] p-10 flex flex-col justify-between"
-          style={{ borderColor: 'var(--accent-primary)' }}
+          style={{ borderColor: 'var(--accent)' }}
         >
           <div>
-            <div className="icon-wrapper mb-8 shadow-[0_0_20px_rgba(123,71,255,0.4)] bg-accent-primary text-white">
+            <div className="icon-wrapper bg-accent text-white mb-8 shadow-[0_0_20px_rgba(123,71,255,0.4)]">
               <RiShieldUserLine size={32} />
             </div>
             <h3 className="text-3xl font-black mb-4 tracking-tighter">COMMAND</h3>
@@ -54,8 +54,8 @@ const Landing = ({ onAdminClick, onEmployeeClick }) => {
         </motion.div>
       </div>
 
-      <footer className="mt-auto mb-8 text-text-muted text-[10px] font-black tracking-[0.3em] uppercase opacity-60">
-        Made By Aditi and Shreyash &copy; 2026
+      <footer className="mt-16 text-text-muted text-[10px] font-black tracking-[0.3em] uppercase opacity-40">
+        SECURE AUTH NODE V1.0.42 // ANTIGRAVITY IDE POWERED
       </footer>
     </div>
   );

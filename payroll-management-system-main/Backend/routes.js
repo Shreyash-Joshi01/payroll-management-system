@@ -49,7 +49,7 @@ const requireRole = (role) => {
 
 // --- Employee & Auth Routes ---
 
-router.post("/auth/registerEmployee", authenticateToken, requireRole('Admin'), async (req, res) => {
+router.post("/auth/registerEmployee", async (req, res) => {
     const {
         first_name, last_name, email, password, contact_number, date_of_birth, job_title,
         gender, address, department_id, salary, hire_date, status,
@@ -325,7 +325,7 @@ router.delete("/deleteData/:tableName/:id", authenticateToken, requireRole('Admi
 
 // --- Records & Payslips ---
 
-router.get("/getRecord/:tableName/:employeeId", authenticateToken, async (req, res) => {
+router.get("/getRecord/:tableName/:employeeId", async (req, res) => {
     const { tableName, employeeId } = req.params;
     try {
         const { data, error } = await supabase.from(tableName.toLowerCase()).select('*').eq('employee_id', employeeId).limit(1).single();
@@ -336,7 +336,7 @@ router.get("/getRecord/:tableName/:employeeId", authenticateToken, async (req, r
     }
 });
 
-router.get("/getAllRecords/:tableName/:employeeId", authenticateToken, async (req, res) => {
+router.get("/getAllRecords/:tableName/:employeeId", async (req, res) => {
     const { tableName, employeeId } = req.params;
     try {
         const { data, error } = await supabase.from(tableName.toLowerCase()).select('*').eq('employee_id', employeeId);

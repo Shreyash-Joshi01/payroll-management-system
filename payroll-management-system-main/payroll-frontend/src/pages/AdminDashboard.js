@@ -54,12 +54,10 @@ const AdminDashboard = () => {
 
         <button
           onClick={handleSignOut}
-          className="mt-auto sidebar-btn"
+          className="mt-auto flex items-center gap-3 px-4 py-3 text-text-muted hover:text-error transition-colors uppercase text-xs font-black tracking-widest"
         >
-          <div className="icon-box" style={{ flexShrink: 0 }}>
-            <FiLogOut />
-          </div>
-          <span className="font-black" style={{ whiteSpace: 'nowrap' }}>Abort Session</span>
+          <FiLogOut />
+          Abort Session
         </button>
       </aside>
 

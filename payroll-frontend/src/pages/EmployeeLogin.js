@@ -1,67 +1,104 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { FiUser, FiLock, FiChevronLeft } from "react-icons/fi";
+import toast from "react-hot-toast";
 
 const EmployeeLogin = () => {
-  const [employeeId, setEmployeeId] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
+    setLoading(true);
+    const logToast = toast.loading("Verifying member ID...");
+
     try {
-      const res = await fetch("http://localhost:5000/loginEmployee", {
+      const res = await fetch(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000'}/auth/employee/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ employee_id: employeeId, password }),
+        body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
       if (data.success) {
+        localStorage.setItem('token', data.session.access_token);
+        localStorage.setItem('userData', JSON.stringify(data.employee));
+        toast.success(`Welcome, ${data.employee.first_name}`, { id: logToast });
         navigate("/employee-dashboard", { state: { employee: data.employee } });
       } else {
-        setError(data.message || "Login failed");
+        toast.error(data.message || "Credential mismatch", { id: logToast });
       }
     } catch (err) {
-      setError("Server error");
+      toast.error("Network synchronization error", { id: logToast });
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-mainbg animate-fade-in font-display">
-      <div className="bg-card rounded-xl shadow-xl p-8 border-t-8 border-green w-96 animate-slide-up">
-        <h2 className="text-3xl font-extrabold text-green mb-2 text-center font-display">Employee Login</h2>
-        <p className="text-body text-center mb-6 font-body">Hey there! Ready to check your details? 🚀</p>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <input
-            className="border border-panel rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-            type="text"
-            placeholder="Employee ID"
-            value={employeeId}
-            onChange={e => setEmployeeId(e.target.value)}
-            required
-          />
-          <input
-            className="border border-panel rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            required
-          />
-          {error && <div className="text-red-600 text-sm text-center">{error}</div>}
-          <button type="submit" className="w-full py-2 px-4 bg-green text-dark rounded-lg font-bold shadow hover:bg-accent hover:text-dark transition-colors duration-300">Login</button>
+    <div className="login-container">
+      {/* Background Gradients */}
+      <div className="blob blob-1"></div>
+      <div className="blob blob-2"></div>
+
+      <div className="login-card animate-fade-in">
+        <button onClick={() => navigate("/")} className="back-link">
+          <FiChevronLeft /> Return Home
+        </button>
+
+        <div className="login-header">
+          <div className="login-icon" style={{ backgroundColor: 'var(--accent-light)', color: 'var(--accent)' }}>
+            <FiUser size={32} />
+          </div>
+          <h2 className="login-title">Staff Portal</h2>
+          <p className="login-subtitle">Access your automated payroll profile.</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="login-form">
+          <div className="form-group">
+            <label className="form-label">Email Address</label>
+            <div className="input-wrapper">
+              <FiUser className="input-icon" />
+              <input
+                className="form-input"
+                type="email"
+                placeholder="name@company.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Password</label>
+            <div className="input-wrapper">
+              <FiLock className="input-icon" />
+              <input
+                className="form-input"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="form-action" style={{ marginTop: '2rem' }}>
+            <button type="submit" disabled={loading} className="btn btn-primary">
+              {loading ? "Synchronizing..." : "Sign In to Dashboard"}
+            </button>
+          </div>
         </form>
-        <button onClick={() => navigate("/")} className="mt-4 text-primary hover:underline text-sm">← Back to Home</button>
       </div>
-      <style>{`
-        .animate-fade-in { animation: fadeIn 1s ease; }
-        .animate-slide-up { animation: slideUp 1s cubic-bezier(.4,2,.6,1); }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
-      `}</style>
+
+      <p className="login-footer">
+        Powered by <span className="white-text">Finest Digital Infrastructure</span>
+      </p>
     </div>
   );
 };
 
-export default EmployeeLogin; 
+export default EmployeeLogin;

@@ -12,7 +12,7 @@ import employeeRoutes from "./routes.js"; // Import the routes
 const app = express(); // ✅ Initialize app here, before using it
 
 // Middleware
-app.use(cors({ origin: ['http://localhost:3000', 'http://localhost:5173'] }));
+app.use(cors());
 app.use(json());
 
 // Request Logger (Claude Opus Style - Observability)
@@ -90,11 +90,6 @@ app.use("/", employeeRoutes);
 
 // Start the server
 const PORT = process.env.BACKEND_PORT || 5000;
-if (process.env.NODE_ENV !== "production") {
-    app.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
-    });
-}
-
-// Export for Vercel Serverless
-export default app;
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});

@@ -1,67 +1,105 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { FiShield, FiLock, FiChevronLeft } from "react-icons/fi";
+import toast from "react-hot-toast";
 
 const AdminLogin = () => {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
+    setLoading(true);
+    const logToast = toast.loading("Authenticating admin...");
+
     try {
-      const res = await fetch("http://localhost:5000/loginAdmin", {
+      const res = await fetch(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000'}/auth/admin/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ email, password }),
       });
+
       const data = await res.json();
       if (data.success) {
+        localStorage.setItem('token', data.session.access_token);
+        localStorage.setItem('userData', JSON.stringify(data.user));
+        toast.success("Welcome back, Administrator", { id: logToast });
         navigate("/admin-dashboard");
       } else {
-        setError(data.message || "Login failed");
+        toast.error(data.message || "Invalid credentials", { id: logToast });
       }
     } catch (err) {
-      setError("Server error");
+      toast.error("Auth gateway timeout", { id: logToast });
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-mainbg animate-fade-in font-display">
-      <div className="bg-card rounded-xl shadow-xl p-8 border-t-8 border-green w-96 animate-slide-up">
-        <h2 className="text-3xl font-extrabold text-green mb-2 text-center font-display">Admin Login</h2>
-        <p className="text-body text-center mb-6 font-body">Welcome back, admin! 🌟</p>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <input
-            className="border border-panel rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-            type="text"
-            placeholder="Username"
-            value={username}
-            onChange={e => setUsername(e.target.value)}
-            required
-          />
-          <input
-            className="border border-panel rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            required
-          />
-          {error && <div className="text-red-600 text-sm text-center">{error}</div>}
-          <button type="submit" className="w-full py-2 px-4 bg-green text-dark rounded-lg font-bold shadow hover:bg-accent hover:text-dark transition-colors duration-300">Login</button>
+    <div className="login-container">
+      {/* Background Gradients */}
+      <div className="blob blob-1"></div>
+      <div className="blob blob-2"></div>
+
+      <div className="login-card animate-fade-in">
+        <button onClick={() => navigate("/")} className="back-link">
+          <FiChevronLeft /> Back to Portal
+        </button>
+
+        <div className="login-header">
+          <div className="login-icon">
+            <FiShield size={32} />
+          </div>
+          <h2 className="login-title">Admin Console</h2>
+          <p className="login-subtitle">Enter credentials to access manager tools.</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="login-form">
+          <div className="form-group">
+            <label className="form-label">Identity</label>
+            <div className="input-wrapper">
+              <FiShield className="input-icon" />
+              <input
+                className="form-input"
+                type="email"
+                placeholder="admin@company.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Secret Key</label>
+            <div className="input-wrapper">
+              <FiLock className="input-icon" />
+              <input
+                className="form-input"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="form-action" style={{ marginTop: '2rem' }}>
+            <button type="submit" disabled={loading} className="btn btn-primary">
+              {loading ? "Verifying..." : "Authorize Access"}
+            </button>
+          </div>
         </form>
-        <button onClick={() => navigate("/")} className="mt-4 text-primary hover:underline text-sm">← Back to Home</button>
       </div>
-      <style>{`
-        .animate-fade-in { animation: fadeIn 1s ease; }
-        .animate-slide-up { animation: slideUp 1s cubic-bezier(.4,2,.6,1); }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
-      `}</style>
+
+      <p className="login-footer">
+        Secure Managed Environment <span className="white-text">v2.4.0</span>
+      </p>
     </div>
   );
 };
 
-export default AdminLogin; 
+export default AdminLogin;

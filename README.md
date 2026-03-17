@@ -1,61 +1,30 @@
-# Payroll Management System
+# Payroll Core: Next-Gen HR Architecture
 
-A full-stack payroll management system with React frontend and Node.js backend.
+A full-stack, cyberpunk-themed payroll management and HR administration system designed for modern workflows. Built with React, Tailwind CSS, Node.js, Express, and Supabase.
 
-## Project Structure
+## Features
+- **Secure Auth Nodes**: Administrator and Personnel login interfaces with Row Level Security.
+- **Dark Mode UI**: Professional "Zero Light" cyberpunk aesthetic with glassmorphism and neon accents.
+- **Command Console (Admin)**: Manage nodes, onboard employees, process payroll, and view system logs.
+- **Personnel Dashboard (Employee)**: Access payslips, view execution logs, and request time-out (leaves).
+- **PDF Generation**: View and download dynamically generated official payslips.
 
-- `payroll-frontend/` - React frontend application
-- `Backend/` - Node.js backend server
-- `database/` - Database related files and configurations
+## Local Development
+1. Clone the repository.
+2. Run `npm run install-all` from the root directory.
+3. Set up your `.env` file (refer to `.env.example`).
+4. Run `npm run dev` from the root directory to start both frontend and backend concurrently.
+   - Frontend starts on `http://localhost:3000`
+   - Backend API starts on `http://localhost:5000`
 
-## Prerequisites
+## Vercel Deployment Guide
+This project is pre-configured to be deployed as a single unit on Vercel leveraging **Vercel Serverless Functions**.
 
-- Node.js (v14 or higher)
-- npm (v6 or higher)
-- MySQL/MariaDB
+1. Connect your repository to Vercel.
+2. Vercel will automatically detect `vercel.json` for routing.
+3. Go to your Vercel Project Settings > Environment Variables, and add all variables from your local `.env`. 
+   > **Important:** Ensure `REACT_APP_API_BASE_URL` is set to `/api` in Vercel to correctly route frontend requests to the serverless backend.
+4. Deploy!
 
-## Setup Instructions
-
-1. Clone the repository
-2. Install dependencies:
-   ```bash
-   # Install root dependencies
-   npm install
-   
-   # Install frontend dependencies
-   cd payroll-frontend
-   npm install
-   
-   # Install backend dependencies
-   cd ../Backend
-   npm install
-   ```
-
-3. Configure the database:
-   - Set up your MySQL/MariaDB database
-   - Update database configuration in `Backend/database.js`
-
-4. Start the development servers:
-   ```bash
-   # Start backend server (from Backend directory)
-   npm run dev
-   
-   # Start frontend server (from payroll-frontend directory)
-   npm start
-   ```
-
-The frontend will be available at `http://localhost:3000` and the backend at `http://localhost:5000`.
-
-## Development
-
-- Frontend: React with Tailwind CSS
-- Backend: Node.js with Express
-- Database: MySQL/MariaDB
-
-## Available Scripts
-
-In the project directory, you can run:
-
-- `npm run dev` - Starts both frontend and backend servers
-- `npm run frontend` - Starts only the frontend server
-- `npm run backend` - Starts only the backend server 
+## Credits
+Made by **Aditi** and **Shreyash** &copy; 2026

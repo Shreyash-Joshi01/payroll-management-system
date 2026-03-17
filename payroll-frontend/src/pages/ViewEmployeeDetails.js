@@ -1,20 +1,24 @@
 import React, { useEffect, useState } from "react";
 import jsPDF from "jspdf";
+import { FiFileText, FiDownload, FiX, FiUsers, FiSearch } from "react-icons/fi";
+import toast from "react-hot-toast";
 
-function PayslipModal({ employeeId, onClose }) {
+const PayslipModal = ({ employeeId, onClose }) => {
   const [payslip, setPayslip] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
 
   useEffect(() => {
-    fetch(`http://localhost:5000/getPayslip/${employeeId}`)
+    const token = localStorage.getItem('token');
+    fetch(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000'}/getPayslip/${employeeId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
       .then(res => res.json())
       .then(data => {
         setPayslip(data.payslip);
         setLoading(false);
       })
       .catch(() => {
-        setError("Failed to fetch payslip.");
+        toast.error("Failed to fetch payslip details.");
         setLoading(false);
       });
   }, [employeeId]);
@@ -22,124 +26,181 @@ function PayslipModal({ employeeId, onClose }) {
   const handleDownloadPDF = () => {
     if (!payslip) return;
     const doc = new jsPDF();
-    doc.setFontSize(18);
-    doc.text("Payslip", 105, 15, null, null, "center");
-    doc.setFontSize(12);
-    doc.text(`Name: ${payslip.first_name} ${payslip.last_name}`, 20, 35);
-    doc.text(`Job Title: ${payslip.job_title}`, 20, 45);
+    doc.setFont("helvetica", "bold");
+    doc.text("OFFICIAL PAYSLIP", 105, 15, { align: "center" });
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Employee: ${payslip.first_name} ${payslip.last_name}`, 20, 35);
+    doc.text(`Designation: ${payslip.job_title}`, 20, 45);
     doc.text(`Department: ${payslip.department_name}`, 20, 55);
-    doc.text(`Payslip Date: ${payslip.payslip_date}`, 20, 65);
-    doc.text(`Gross Salary: ₹${payslip.gross_salary}`, 20, 75);
-    doc.text(`Net Salary: ₹${payslip.net_salary}`, 20, 85);
-    // Add more fields as needed
-    doc.save(`Payslip_${payslip.first_name}_${payslip.last_name}_${payslip.payslip_date}.pdf`);
+    doc.text(`Period: ${payslip.payslip_date}`, 20, 65);
+    doc.line(20, 70, 190, 70);
+    doc.setFont("helvetica", "bold");
+    doc.text(`Total Earnings: ₹${payslip.gross_salary}`, 20, 80);
+    doc.text(`Total Deductions: ₹${payslip.total_deductions || 0}`, 20, 90);
+    doc.text(`NET PAYABLE: ₹${payslip.net_salary}`, 20, 105);
+    doc.save(`Payslip_${payslip.first_name}.pdf`);
   };
 
-  if (loading) return <div className="p-8">Loading...</div>;
-  if (error) return <div className="p-8 text-red-600">{error}</div>;
-  if (!payslip) return null;
+  if (loading) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-      <div className="bg-card rounded-xl shadow-xl p-8 w-full max-w-lg relative border-2 border-accent">
-        <button className="absolute top-2 right-4 text-xl text-white" onClick={onClose}>&times;</button>
-        <div className="flex justify-center mb-6">
-          <span className="bg-panel text-header text-2xl font-extrabold px-8 py-2 rounded-full shadow border-2 border-accent text-center">Payslip</span>
+    <div className="fixed inset-0 bg-black-60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="glass rounded-3xl p-8 w-full max-w-lg relative animate-fade-in border border-white-20">
+        <button className="absolute top-6 right-6 text-text-muted hover:text-white transition-colors" onClick={onClose}>
+          <FiX size={24} />
+        </button>
+
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-primary-10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <FiFileText size={32} className="text-primary" />
+          </div>
+          <h2 className="text-2xl font-bold text-white uppercase tracking-tight">Employee Payslip</h2>
+          <p className="text-text-secondary text-sm">Review detailed salary breakdown</p>
         </div>
-        <div className="bg-panel rounded-lg p-6 shadow-inner flex flex-col gap-2">
-          <div className="flex gap-2"><span className="font-bold text-header">Name:</span><span className="font-bold text-header">{payslip.first_name} {payslip.last_name}</span></div>
-          <div className="flex gap-2"><span className="font-bold text-header">Job Title:</span><span className="font-bold text-header">{payslip.job_title}</span></div>
-          <div className="flex gap-2"><span className="font-bold text-header">Department:</span><span className="font-bold text-header">{payslip.department_name}</span></div>
-          <div className="flex gap-2"><span className="font-bold text-header">Payslip Date:</span><span className="font-bold text-header">{payslip.payslip_date}</span></div>
-          <div className="flex gap-2"><span className="font-bold text-header">Gross Salary:</span><span className="font-bold text-header">₹{payslip.gross_salary}</span></div>
-          <div className="flex gap-2"><span className="font-bold text-header">Net Salary:</span><span className="font-bold text-header">₹{payslip.net_salary}</span></div>
+
+        <div className="space-y-4 bg-white-5 rounded-2xl p-6 border border-white-5 mb-8">
+          <DetailRow label="Employee Name" value={`${payslip.first_name} ${payslip.last_name}`} />
+          <DetailRow label="Job Title" value={payslip.job_title} />
+          <DetailRow label="Department" value={payslip.department_name} />
+          <div className="h-px bg-white-10 my-2"></div>
+          <DetailRow label="Gross Salary" value={`₹${payslip.gross_salary}`} />
+          <DetailRow label="Net Payable" value={`₹${payslip.net_salary}`} highlight />
         </div>
+
         <button
-          className="mt-6 py-2 px-4 bg-header text-white rounded-lg font-semibold shadow hover:bg-primary transition-colors duration-300 w-full"
+          className="w-full py-4 bg-primary hover:bg-primary-hover text-white rounded-2xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-primary-soft"
           onClick={handleDownloadPDF}
         >
-          Download PDF
+          <FiDownload /> Download Statement (PDF)
         </button>
       </div>
     </div>
   );
-}
+};
+
+const DetailRow = ({ label, value, highlight }) => (
+  <div className="flex justify-between items-center text-sm">
+    <span className="text-text-muted font-medium">{label}</span>
+    <span className={`font-bold ${highlight ? 'text-primary text-lg' : 'text-white'}`}>{value}</span>
+  </div>
+);
 
 const ViewEmployeeDetails = () => {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [showPayslip, setShowPayslip] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
-    const fetchEmployees = async () => {
-      try {
-        const res = await fetch("http://localhost:5000/getAllEmployees");
-        if (!res.ok) throw new Error("Failed to fetch employees");
-        const data = await res.json();
+    const token = localStorage.getItem('token');
+    fetch(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000'}/getAllEmployees`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+      .then(res => res.json())
+      .then(data => {
         setEmployees(data.employees || []);
-      } catch (err) {
-        setError(err.message || "Error fetching data");
-      } finally {
         setLoading(false);
-      }
-    };
-    fetchEmployees();
+      })
+      .catch(() => {
+        toast.error("Failed to load employee data.");
+        setLoading(false);
+      });
   }, []);
 
-  if (loading) return <div className="text-center py-8">Loading...</div>;
-  if (error) return <div className="text-center text-red-600 py-8">{error}</div>;
+  const filteredEmployees = employees.filter(emp =>
+    `${emp.first_name} ${emp.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    emp.job_title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  if (loading) return (
+    <div className="flex flex-col items-center justify-center py-20 animate-pulse">
+      <FiUsers size={48} className="text-text-muted mb-4" />
+      <p className="text-text-muted">Fetching latest records...</p>
+    </div>
+  );
 
   return (
-    <div className="bg-card rounded-xl shadow-xl p-8 border-t-8 border-green w-full animate-slide-up overflow-x-auto font-display">
-      <h2 className="text-2xl font-extrabold text-green mb-4 text-center font-display">Employee Details</h2>
-      <table className="min-w-full table-auto border-collapse font-body">
-        <thead>
-          <tr className="bg-header text-white">
-            <th className="px-4 py-2">ID</th>
-            <th className="px-4 py-2">First Name</th>
-            <th className="px-4 py-2">Last Name</th>
-            <th className="px-4 py-2">Email</th>
-            <th className="px-4 py-2">Contact</th>
-            <th className="px-4 py-2">DOB</th>
-            <th className="px-4 py-2">Job Title</th>
-            <th className="px-4 py-2">Gender</th>
-            <th className="px-4 py-2">Address</th>
-            <th className="px-4 py-2">Department</th>
-            <th className="px-4 py-2">Salary</th>
-            <th className="px-4 py-2">Hire Date</th>
-            <th className="px-4 py-2">Status</th>
-            <th className="px-4 py-2">Payslip</th>
-          </tr>
-        </thead>
-        <tbody>
-          {employees.map(emp => (
-            <tr key={emp.employee_id} className="border-b">
-              <td className="px-4 py-2">{emp.employee_id}</td>
-              <td className="px-4 py-2">{emp.first_name}</td>
-              <td className="px-4 py-2">{emp.last_name}</td>
-              <td className="px-4 py-2">{emp.email}</td>
-              <td className="px-4 py-2">{emp.contact_number}</td>
-              <td className="px-4 py-2">{emp.date_of_birth}</td>
-              <td className="px-4 py-2">{emp.job_title}</td>
-              <td className="px-4 py-2">{emp.gender}</td>
-              <td className="px-4 py-2">{emp.address}</td>
-              <td className="px-4 py-2">{emp.department_name || emp.department || ""}</td>
-              <td className="px-4 py-2">₹{emp.salary}</td>
-              <td className="px-4 py-2">{emp.hire_date}</td>
-              <td className="px-4 py-2">{emp.status}</td>
-              <td className="px-4 py-2">
-                <button className="text-primary underline" onClick={() => setShowPayslip(emp.employee_id)}>
-                  View Payslip
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="space-y-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-white">Employee Directory</h2>
+          <p className="text-text-secondary mt-1">Found {filteredEmployees.length} registered members.</p>
+        </div>
+        <div className="relative w-full md:w-80 group">
+          <div className="absolute inset-x-0 bottom-0 h-[1px] bg-gradient-to-r from-transparent via-cyan to-transparent opacity-0 group-focus-within:opacity-100 transition-all duration-500 shadow-[0_1px_10px_rgba(0,240,255,0.3)]"></div>
+          <div className="relative flex items-center bg-midnight border-b border-neon px-4 py-3 group-focus-within:border-cyan transition-all duration-300">
+            <div className="flex items-center justify-center mr-3 text-muted group-focus-within:text-cyan transition-colors">
+              <FiSearch size={18} />
+            </div>
+            <input
+              type="text"
+              placeholder="SEARCH DIRECTORY..."
+              className="w-full bg-transparent !bg-none border-none text-white focus:outline-none placeholder:text-muted text-[10px] font-black tracking-[0.2em]"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="glass rounded-3xl overflow-hidden animate-fade-in">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left" style={{ tableLayout: 'fixed' }}>
+            <thead>
+              <tr className="bg-midnight text-xs text-secondary uppercase tracking-widest border-b border-neon">
+                <th className="px-6 py-5 font-black" style={{ width: '8%' }}>ID</th>
+                <th className="px-6 py-5 font-black" style={{ width: '22%' }}>Member</th>
+                <th className="px-6 py-5 font-black" style={{ width: '20%' }}>Department</th>
+                <th className="px-6 py-5 font-black" style={{ width: '18%' }}>Salary</th>
+                <th className="px-6 py-5 font-black text-cyan" style={{ width: '15%' }}>Status</th>
+                <th className="px-6 py-5 font-black text-right" style={{ width: '17%' }}>Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-neon">
+              {filteredEmployees.map(emp => (
+                <tr key={emp.employee_id} className="text-sm text-text-secondary hover:bg-white-5 transition-colors group">
+                  <td className="px-6 py-5 font-mono text-xs text-cyan opacity-70">{emp.employee_id}</td>
+                  <td className="px-6 py-5">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-midnight border border-neon flex items-center justify-center text-secondary font-bold text-xs shadow-neon">
+                        {emp.first_name[0]}{emp.last_name[0]}
+                      </div>
+                      <div>
+                        <p className="text-white font-black tracking-tight">{emp.first_name} {emp.last_name}</p>
+                        <p className="text-xs text-secondary">{emp.job_title}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-5">{emp.departments?.department_name || "N/A"}</td>
+                  <td className="px-6 py-5 font-medium text-white">₹{emp.salary.toLocaleString()}</td>
+                  <td className="px-6 py-5">
+                    <span className={`px-2 py-1 rounded-md text-xs font-black uppercase ${emp.status === 'Active' ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'
+                      }`}>
+                      {emp.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-5 text-right">
+                    <button
+<<<<<<< HEAD:payroll-frontend/src/pages/ViewEmployeeDetails.js
+                      className="bg-primary-10 text-primary hover:bg-primary border border-primary-20 hover:text-midnight px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all"
+=======
+                      className="text-primary hover:text-primary-hover font-bold text-xs uppercase tracking-tight transition-colors"
+>>>>>>> fb57fde8cf0dbedbb755a4582cd9d2854e4afb27:payroll-management-system-main/payroll-frontend/src/pages/ViewEmployeeDetails.js
+                      onClick={() => setShowPayslip(emp.employee_id)}
+                    >
+                      View Slip
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
       {showPayslip && <PayslipModal employeeId={showPayslip} onClose={() => setShowPayslip(null)} />}
     </div>
   );
 };
 
-export default ViewEmployeeDetails; 
+export default ViewEmployeeDetails;
