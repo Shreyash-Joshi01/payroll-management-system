@@ -13,9 +13,9 @@ const AdminLogin = () => {
     e.preventDefault();
     setLoading(true);
     const logToast = toast.loading("Authenticating admin...");
-    
+
     try {
-      const res = await fetch("http://localhost:5000/loginAdmin", {
+      const res = await fetch(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000'}/auth/admin/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -23,6 +23,8 @@ const AdminLogin = () => {
 
       const data = await res.json();
       if (data.success) {
+        localStorage.setItem('token', data.session.access_token);
+        localStorage.setItem('userData', JSON.stringify(data.user));
         toast.success("Welcome back, Administrator", { id: logToast });
         navigate("/admin-dashboard");
       } else {
@@ -47,52 +49,52 @@ const AdminLogin = () => {
         </button>
 
         <div className="login-header">
-             <div className="login-icon">
-                <FiShield size={32} />
-             </div>
-             <h2 className="login-title">Admin Console</h2>
-             <p className="login-subtitle">Enter credentials to access manager tools.</p>
+          <div className="login-icon">
+            <FiShield size={32} />
+          </div>
+          <h2 className="login-title">Admin Console</h2>
+          <p className="login-subtitle">Enter credentials to access manager tools.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">
           <div className="form-group">
             <label className="form-label">Identity</label>
             <div className="input-wrapper">
-                <FiShield className="input-icon" />
-                <input
-                    className="form-input"
-                    type="email"
-                    placeholder="admin@company.com"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    required
-                />
+              <FiShield className="input-icon" />
+              <input
+                className="form-input"
+                type="email"
+                placeholder="admin@company.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
+              />
             </div>
           </div>
 
           <div className="form-group">
             <label className="form-label">Secret Key</label>
             <div className="input-wrapper">
-                <FiLock className="input-icon" />
-                <input
-                    className="form-input"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    required
-                />
+              <FiLock className="input-icon" />
+              <input
+                className="form-input"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+              />
             </div>
           </div>
 
           <div className="form-action" style={{ marginTop: '2rem' }}>
             <button type="submit" disabled={loading} className="btn btn-primary">
-                {loading ? "Verifying..." : "Authorize Access"}
+              {loading ? "Verifying..." : "Authorize Access"}
             </button>
           </div>
         </form>
       </div>
-      
+
       <p className="login-footer">
         Secure Managed Environment <span className="white-text">v2.4.0</span>
       </p>
