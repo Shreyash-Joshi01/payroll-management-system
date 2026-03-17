@@ -1,8 +1,8 @@
 /**
  * Centralized API Configuration
  * 
- * Automatically detects if the app is running in a local environment or on Vercel.
- * Provides a unified API_BASE URL to avoid repeating environment variable logic.
+ * In production, the frontend on Vercel connects to the backend on Render.
+ * In local development, it connects to localhost:5000.
  */
 
 const isLocalhost = Boolean(
@@ -12,9 +12,11 @@ const isLocalhost = Boolean(
 );
 
 // Priority:
-// 1. Explicitly set env variable
-// 2. Localhost defaults to 5000 (standard for this project)
-// 3. Vercel/Production defaults to /api (proxied via vercel.json)
-export const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || (isLocalhost ? 'http://localhost:5000' : '/api');
+// 1. Explicitly set REACT_APP_API_BASE_URL env variable
+// 2. Localhost defaults to port 5000
+// 3. Production defaults to the Render backend URL
+const RENDER_BACKEND_URL = 'https://payroll-management-system-backend.onrender.com';
+
+export const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || (isLocalhost ? 'http://localhost:5000' : RENDER_BACKEND_URL);
 
 export default API_BASE_URL;
