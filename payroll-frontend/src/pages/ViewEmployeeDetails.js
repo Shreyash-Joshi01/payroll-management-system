@@ -182,7 +182,11 @@ const ViewEmployeeDetails = () => {
                   </td>
                   <td className="px-6 py-5 text-right">
                     <button
+<<<<<<< HEAD:payroll-frontend/src/pages/ViewEmployeeDetails.js
                       className="bg-primary-10 text-primary hover:bg-primary border border-primary-20 hover:text-midnight px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all"
+=======
+                      className="text-primary hover:text-primary-hover font-bold text-xs uppercase tracking-tight transition-colors"
+>>>>>>> fb57fde8cf0dbedbb755a4582cd9d2854e4afb27:payroll-management-system-main/payroll-frontend/src/pages/ViewEmployeeDetails.js
                       onClick={() => setShowPayslip(emp.employee_id)}
                     >
                       View Slip

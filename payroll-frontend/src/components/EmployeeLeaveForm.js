@@ -103,10 +103,17 @@ const EmployeeLeaveForm = ({ employeeId }) => {
                   fontFamily: "inherit",
                 }}
               >
+<<<<<<< HEAD:payroll-frontend/src/components/EmployeeLeaveForm.js
                 <option value="Sick Leave" className="bg-midnight text-white">Sick Leave</option>
                 <option value="Casual Leave" className="bg-midnight text-white">Casual Leave</option>
                 <option value="Earned Leave" className="bg-midnight text-white">Earned Leave</option>
                 <option value="Unpaid Leave" className="bg-midnight text-white">Unpaid Leave</option>
+=======
+                <option value="Sick Leave">Sick Leave</option>
+                <option value="Casual Leave">Casual Leave</option>
+                <option value="Earned Leave">Earned Leave</option>
+                <option value="Unpaid Leave">Unpaid Leave</option>
+>>>>>>> fb57fde8cf0dbedbb755a4582cd9d2854e4afb27:payroll-management-system-main/payroll-frontend/src/components/EmployeeLeaveForm.js
               </select>
             </div>
 
