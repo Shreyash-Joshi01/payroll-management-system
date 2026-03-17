@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import jsPDF from "jspdf";
 import { FiFileText, FiDownload, FiX, FiUsers, FiSearch } from "react-icons/fi";
+import { API_BASE_URL } from "../apiConfig";
 import toast from "react-hot-toast";
 
 const PayslipModal = ({ employeeId, onClose }) => {
@@ -9,7 +10,7 @@ const PayslipModal = ({ employeeId, onClose }) => {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    fetch(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000'}/getPayslip/${employeeId}`, {
+    fetch(`${API_BASE_URL}/getPayslip/${employeeId}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
       .then(res => res.json())
@@ -94,7 +95,7 @@ const ViewEmployeeDetails = () => {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    fetch(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000'}/getAllEmployees`, {
+    fetch(`${API_BASE_URL}/getAllEmployees`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
       .then(res => res.json())

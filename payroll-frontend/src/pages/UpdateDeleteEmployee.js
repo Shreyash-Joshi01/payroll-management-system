@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { FiEdit2, FiTrash2, FiSearch, FiX, FiCheckCircle, FiAlertCircle } from "react-icons/fi";
+import { API_BASE_URL } from "../apiConfig";
 
 const tables = [
   "Employees", "Salaries", "Payroll", "BankDetails", "Allowances",
@@ -17,7 +18,7 @@ const UpdateRecordModal = ({ employee, onClose }) => {
   useEffect(() => {
     setLoading(true);
     const token = localStorage.getItem('token');
-    fetch(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000'}/getRecord/${selectedTable}/${employee.employee_id}`, {
+    fetch(`${API_BASE_URL}/getRecord/${selectedTable}/${employee.employee_id}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
       .then(res => res.json())
@@ -37,7 +38,7 @@ const UpdateRecordModal = ({ employee, onClose }) => {
       const id = record?.employee_id || record?.salary_id || record?.payroll_id || record?.bank_detail_id || record?.allowance_id || record?.bonus_id || record?.attendance_id || record?.deduction_id || record?.leave_id || record?.overtime_id || record?.tax_id || record?.role_id || record?.grade_id;
 
       const token = localStorage.getItem('token');
-      const res = await fetch(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000'}/updateData/${selectedTable}`, {
+      const res = await fetch(`${API_BASE_URL}/updateData/${selectedTable}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -128,7 +129,7 @@ const UpdateDeleteEmployee = () => {
   const fetchEmployees = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000'}/getAllEmployees`, {
+      const res = await fetch(`${API_BASE_URL}/getAllEmployees`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
@@ -156,7 +157,7 @@ const UpdateDeleteEmployee = () => {
               const delToast = toast.loading("Deleting member...");
               try {
                 const token = localStorage.getItem('token');
-                const res = await fetch(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000'}/deleteData/Employees/${employee_id}`, {
+                const res = await fetch(`${API_BASE_URL}/deleteData/Employees/${employee_id}`, {
                   method: "DELETE",
                   headers: { 'Authorization': `Bearer ${token}` }
                 });

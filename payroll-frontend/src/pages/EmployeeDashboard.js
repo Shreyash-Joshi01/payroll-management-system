@@ -1,199 +1,174 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { useNavigate, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { API_BASE_URL } from '../apiConfig';
 import { FiDollarSign, FiCalendar, FiClock, FiDownload, FiMail, FiLogOut, FiBriefcase } from "react-icons/fi";
 import jsPDF from "jspdf";
 import toast from "react-hot-toast";
-import EmployeeLeaveForm from "../components/EmployeeLeaveForm";
 
 const EmployeeDashboard = () => {
     const navigate = useNavigate();
-    const employee = JSON.parse(localStorage.getItem('userData') || '{}');
+    const location = useLocation();
+    const employee = location.state?.employee || JSON.parse(localStorage.getItem('userData'));
     const token = localStorage.getItem('token');
-    const [selected, setSelected] = useState("dashboard");
-
-    const getNextSyncDate = () => {
-        const today = new Date();
-        const nextSync = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-        return nextSync.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-    };
-
-    const [stats] = useState({
-        netSalary: null,
-        nextPayroll: getNextSyncDate()
-    });
 
     const [recentActivity, setRecentActivity] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        if (!employee) {
+            navigate('/login');
+            return;
+        }
+
         const fetchActivity = async () => {
             try {
-                const res = await fetch(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000'}/getRecentActivity/${employee.employee_id}`, {
+                const res = await fetch(`${API_BASE_URL}/getRecentActivity/${employee.employee_id}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 const data = await res.json();
-                if (data.activity) {
-                    setRecentActivity(data.activity);
-                }
-            } catch (error) {
-                console.error("Failed to load execution logs");
+                setRecentActivity(data.activity || []);
+            } catch (err) {
+                console.error("Activity fetch failed:", err);
+            } finally {
+                setLoading(false);
             }
         };
 
-        if (employee.employee_id) {
-            fetchActivity();
-        }
-    }, [employee.employee_id, token]);
+        fetchActivity();
+    }, [employee, navigate, token]);
 
-    const handleSignOut = () => {
-        localStorage.clear();
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('userData');
+        localStorage.removeItem('role');
+        toast.success("Safe logout successful");
         navigate('/');
     };
 
-    const handleDownloadPayslip = () => {
+    const generatePayslipPDF = () => {
         const doc = new jsPDF();
         doc.setFont("helvetica", "bold");
-        doc.text("OFFICIAL PAYSLIP", 105, 20, { align: "center" });
+        doc.text("EMPLOYEE PAYSLIP (PREVIEW)", 105, 20, { align: "center" });
+        doc.line(20, 25, 190, 25);
         doc.setFontSize(10);
         doc.setFont("helvetica", "normal");
-        doc.text(`Employee: ${employee.first_name || 'User'} ${employee.last_name || ''}`, 20, 40);
-        doc.text(`Designation: ${employee.job_title || 'Personnel'}`, 20, 50);
-        doc.text(`Net Salary: ₹${stats.netSalary || '45,000'}`, 20, 60);
-        doc.save(`Payslip_${employee.first_name || 'employee'}.pdf`);
+        doc.text(`Employee Name: ${employee.first_name} ${employee.last_name}`, 20, 40);
+        doc.text(`Position: ${employee.job_title}`, 20, 50);
+        doc.text(`Current Salary: ₹${employee.salary.toLocaleString()}`, 20, 60);
+        doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, 70);
+        doc.save(`${employee.first_name}_Payslip.pdf`);
     };
 
+    if (!employee) return null;
+
     return (
-        <div className="min-h-screen bg-midnight text-primary flex">
-            {/* Sidebar */}
-            <aside className="w-72 bg-surface border-r border-neon flex flex-col p-6">
-                <div className="mb-10 px-2">
-                    <h1 className="text-2xl font-black tracking-tighter text-white uppercase">
-                        NODE<span className="text-accent">.</span>OP
-                    </h1>
-                    <p className="text-[10px] text-accent mt-1 uppercase tracking-[0.2em] font-black">Personnel Interface</p>
-                </div>
+        <div className="min-h-screen bg-primary p-4 md:p-8">
+            <div className="blob blob-1"></div>
+            <div className="blob blob-2"></div>
 
-                <nav className="flex-1 space-y-3">
-                    <button onClick={() => setSelected("dashboard")} className={`sidebar-btn ${selected === 'dashboard' ? 'active' : ''}`}>
-                        <div className="icon-box" style={{ flexShrink: 0 }}>
-                            <FiBriefcase />
+            <div className="max-w-7xl mx-auto space-y-8 animate-fade-in relative z-10">
+                <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 glass p-8 rounded-[2rem] border border-white-10">
+                    <div className="flex items-center gap-5">
+                        <div className="w-16 h-16 bg-primary-10 rounded-2xl flex items-center justify-center text-primary border border-primary-20 shadow-neon">
+                            <span className="text-2xl font-black">{employee.first_name[0]}{employee.last_name[0]}</span>
                         </div>
-                        <span className="font-black" style={{ whiteSpace: 'nowrap' }}>Dashboard</span>
-                    </button>
-                    <button onClick={handleDownloadPayslip} className={`sidebar-btn ${selected === 'payslips' ? 'active' : ''}`}>
-                        <div className="icon-box" style={{ flexShrink: 0 }}>
-                            <FiDownload />
+                        <div>
+                            <h1 className="text-3xl font-black text-white tracking-tighter uppercase">Welcome, {employee.first_name}</h1>
+                            <div className="flex items-center gap-3 mt-1">
+                                <span className="text-text-secondary text-sm font-medium">{employee.job_title}</span>
+                                <span className="w-1 h-1 bg-white-20 rounded-full"></span>
+                                <span className="text-primary text-xs font-black uppercase tracking-widest bg-primary-10 px-2 py-0.5 rounded-md border border-primary-20">{employee.departments?.department_name || "MEMBER"}</span>
+                            </div>
                         </div>
-                        <span className="font-black" style={{ whiteSpace: 'nowrap' }}>My Payslips</span>
-                    </button>
-                    <button onClick={() => setSelected("leave")} className={`sidebar-btn ${selected === 'leave' ? 'active' : ''}`}>
-                        <div className="icon-box" style={{ flexShrink: 0 }}>
-                            <FiCalendar />
-                        </div>
-                        <span className="font-black" style={{ whiteSpace: 'nowrap' }}>Leave Request</span>
-                    </button>
-                </nav>
-
-                <button
-                    onClick={handleSignOut}
-                    className="mt-auto sidebar-btn"
-                >
-                    <div className="icon-box" style={{ flexShrink: 0 }}>
-                        <FiLogOut />
                     </div>
-                    <span className="font-black" style={{ whiteSpace: 'nowrap' }}>Abort Session</span>
-                </button>
-            </aside>
-
-            {/* Main Content */}
-            <main className="flex-1 p-10 overflow-auto">
-                <header className="mb-12 flex justify-between items-end">
-                    <motion.div initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }}>
-                        <p className="text-cyan font-black tracking-[0.3em] uppercase text-[10px] mb-2">Workspace: Active</p>
-                        <h2 className="text-5xl font-black text-white uppercase tracking-tighter">Welcome, {employee.first_name || 'Node'}</h2>
-                    </motion.div>
-                    <div className="text-right">
-                        <p className="text-white font-black uppercase text-sm tracking-widest">{employee.job_title || 'Authorized Personnel'}</p>
-                        <p className="text-accent font-bold text-xs tracking-wide">{employee.email || 'node@system.io'}</p>
-                    </div>
+                    <button onClick={handleLogout} className="flex items-center gap-2 bg-white-5 hover:bg-danger/10 text-white hover:text-danger px-6 py-3 rounded-2xl border border-white-10 transition-all font-black text-xs uppercase tracking-widest">
+                        <FiLogOut size={16} /> Secure Logout
+                    </button>
                 </header>
 
-                {selected === "dashboard" && (
-                    <>
-                        {/* Stats Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-                            <StatCard icon={<FiDollarSign />} label="Net Earning" value={`₹${stats.netSalary || '45,000'}`} />
-                            <StatCard icon={<FiCalendar />} label="Next Sync" value={stats.nextPayroll} />
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="lg:col-span-2 space-y-8">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <StatCard icon={<FiDollarSign />} label="Net Salary" value={`₹${employee.salary.toLocaleString()}`} color="primary" />
+                            <StatCard icon={<FiCalendar />} label="Status" value={employee.status} color="success" />
+                            <StatCard icon={<FiClock />} label="Shift" value="Regular (9-5)" color="accent" />
                         </div>
 
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                            {/* Activity Feed */}
-                            <motion.div
-                                initial={{ y: 20, opacity: 0 }}
-                                animate={{ y: 0, opacity: 1 }}
-                                transition={{ delay: 0.2 }}
-                                className="lg:col-span-2 bg-surface rounded-xl p-8 border border-neon"
-                            >
-                                <h3 className="text-xs font-black text-accent-primary uppercase tracking-[0.2em] mb-6">Execution Logs</h3>
-                                <div className="space-y-6">
-                                    {recentActivity.length > 0 ? recentActivity.map((activity, i) => (
-                                        <div key={i} className="flex items-start gap-4 border-l-2 border-accent-primary opacity-30 pl-4 py-1">
-                                            <p className="text-secondary text-sm font-medium tracking-wide">{activity}</p>
-                                        </div>
-                                    )) : (
-                                        <div className="flex items-start gap-4 border-l-2 border-white-10 opacity-30 pl-4 py-1">
-                                            <p className="text-secondary text-sm font-medium tracking-wide">No recent execution logs found.</p>
-                                        </div>
-                                    )}
+                        <div className="glass rounded-[2rem] p-8 border border-white-10">
+                            <div className="flex justify-between items-center mb-8">
+                                <h3 className="text-xl font-black text-white uppercase tracking-tight">Recent Activity Log</h3>
+                                <FiBriefcase className="text-text-muted" />
+                            </div>
+                            {loading ? (
+                                <div className="py-12 flex flex-col items-center gap-3">
+                                    <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+                                    <p className="text-text-muted text-xs font-black uppercase tracking-widest">Syncing Records...</p>
                                 </div>
-                            </motion.div>
-
-                            {/* Quick Actions */}
-                            <motion.div
-                                initial={{ y: 20, opacity: 0 }}
-                                animate={{ y: 0, opacity: 1 }}
-                                transition={{ delay: 0.3 }}
-                                className="bg-surface rounded-xl p-8 border border-neon"
-                            >
-                                <h3 className="text-xs font-black text-accent uppercase tracking-[0.2em] mb-6">Macro Controls</h3>
+                            ) : recentActivity.length > 0 ? (
                                 <div className="space-y-4">
-                                    <ActionButton icon={<FiDownload />} label="Pull Latest Slip" onClick={handleDownloadPayslip} primary />
-                                    <ActionButton icon={<FiCalendar />} label="Request Time-Out" onClick={() => setSelected("leave")} />
-                                    <ActionButton icon={<FiMail />} label="Secure HR Comms" onClick={() => window.location.href = 'mailto:hr@payroll.io'} />
+                                    {recentActivity.map((activity, idx) => (
+                                        <div key={idx} className="flex items-center justify-between p-5 bg-white-5 rounded-2xl border border-white-5 hover:border-white-10 transition-colors">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-10 h-10 bg-midnight rounded-xl flex items-center justify-center text-primary border border-white-10">
+                                                    <FiClock size={18} />
+                                                </div>
+                                                <div>
+                                                    <p className="text-white font-bold text-sm uppercase tracking-tight">{activity.action_type}</p>
+                                                    <p className="text-text-muted text-xs">{new Date(activity.timestamp).toLocaleString()}</p>
+                                                </div>
+                                            </div>
+                                            <span className="text-[10px] font-black text-secondary uppercase tracking-widest bg-midnight px-3 py-1.5 rounded-lg border border-white-10">Verified</span>
+                                        </div>
+                                    ))}
                                 </div>
-                            </motion.div>
+                            ) : (
+                                <div className="py-12 bg-white-5 rounded-2xl border border-dashed border-white-10 text-center">
+                                    <p className="text-text-muted text-sm font-medium">No recent system transactions logged.</p>
+                                </div>
+                            )}
                         </div>
-                    </>
-                )}
+                    </div>
 
-                {selected === "leave" && (
-                    <EmployeeLeaveForm employeeId={employee.employee_id} />
-                )}
-            </main>
+                    <div className="space-y-8">
+                        <div className="glass rounded-[2rem] p-8 border border-white-10 overflow-hidden relative">
+                            <div className="relative z-10">
+                                <h3 className="text-xl font-black text-white uppercase tracking-tight mb-2">Internal Assets</h3>
+                                <p className="text-text-secondary text-xs mb-8">Quick access to secure documents.</p>
+                                <div className="space-y-4">
+                                    <button onClick={generatePayslipPDF} className="w-full flex items-center justify-between p-5 bg-primary rounded-2xl text-white font-black text-xs uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-primary-soft">
+                                        Download PDF Payslip <FiDownload size={18} />
+                                    </button>
+                                    <div className="p-5 bg-white-5 rounded-2xl border border-white-10 space-y-3">
+                                        <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Network Details</p>
+                                        <div className="flex items-center gap-3 text-white text-sm">
+                                            <FiMail className="text-primary" />
+                                            <span className="font-bold truncate">{employee.email}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-gradient-to-br from-primary to-accent p-8 rounded-[2rem] text-white shadow-2xl shadow-primary/20">
+                            <h4 className="font-black text-lg uppercase tracking-tight mb-2">Neural Link Active</h4>
+                            <p className="text-white/80 text-xs leading-relaxed">Your account is synchronized with the central payroll ledger. All updates are real-time.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 };
 
-const StatCard = ({ icon, label, value }) => (
-    <motion.div whileHover={{ scale: 1.02 }} className="bg-surface p-6 rounded-xl border border-neon shadow-neon">
-        <div className="w-10 h-10 bg-midnight rounded-lg flex items-center justify-center text-accent-primary border border-neon mb-4">
-            {icon}
+const StatCard = ({ icon, label, value, color }) => (
+    <div className="glass p-6 rounded-3xl border border-white-10 hover:border-white-20 transition-all">
+        <div className={`w-10 h-10 bg-${color}-10 rounded-xl flex items-center justify-center text-${color} mb-4 border border-${color}-20 shadow-lg shadow-${color}-soft`}>
+            {React.cloneElement(icon, { size: 20 })}
         </div>
-        <p className="text-text-secondary text-[10px] uppercase font-black tracking-widest">{label}</p>
-        <p className="text-2xl font-black text-white mt-1 uppercase tracking-tighter" style={{ fontFamily: 'monospace' }}>{value}</p>
-    </motion.div>
-);
-
-const ActionButton = ({ icon, label, onClick, primary }) => (
-    <button
-        onClick={onClick}
-        className={`sidebar-btn ${primary ? 'active' : ''}`}
-    >
-        <div className="icon-box" style={{ flexShrink: 0 }}>
-            {icon}
-        </div>
-        <span className="font-black" style={{ whiteSpace: 'nowrap' }}>{label}</span>
-    </button>
+        <p className="text-text-muted text-[10px] font-black uppercase tracking-widest mb-1">{label}</p>
+        <p className="text-white text-2xl font-black tracking-tight">{value}</p>
+    </div>
 );
 
 export default EmployeeDashboard;

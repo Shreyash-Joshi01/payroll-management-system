@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import toast from "react-hot-toast";
 import { FiUser, FiMail, FiPhone, FiCalendar, FiBriefcase, FiMapPin, FiCreditCard, FiLock } from "react-icons/fi";
+import { API_BASE_URL } from "../apiConfig";
 
 const initialState = {
   first_name: "", last_name: "", email: "", password: "", confirm_password: "",
@@ -35,7 +36,7 @@ const AddEmployee = () => {
 
     try {
       const { confirm_password, ...submitData } = form;
-      const res = await fetch(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000'}/auth/registerEmployee`, {
+      const res = await fetch(`${API_BASE_URL}/auth/registerEmployee`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

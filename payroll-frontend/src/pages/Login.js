@@ -11,6 +11,7 @@ import {
     RiLoader4Line,
     RiArrowRightLine
 } from 'react-icons/ri';
+import { API_BASE_URL } from '../apiConfig';
 
 const Login = () => {
     const [searchParams] = useSearchParams();
@@ -26,10 +27,9 @@ const Login = () => {
         setLoading(true);
 
         try {
-            const apiBase = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
             const endpoint = role === 'admin'
-                ? `${apiBase}/auth/admin/login`
-                : `${apiBase}/auth/employee/login`;
+                ? `${API_BASE_URL}/auth/admin/login`
+                : `${API_BASE_URL}/auth/employee/login`;
 
             const response = await axios.post(endpoint, { email, password });
 
