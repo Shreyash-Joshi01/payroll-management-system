@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { FiCalendar, FiSend, FiClock } from "react-icons/fi";
 import toast from "react-hot-toast";
+import { API_BASE_URL } from "../apiConfig";
 
 const EmployeeLeaveForm = ({ employeeId }) => {
   const [leaveType, setLeaveType] = useState("Sick Leave");
@@ -11,12 +12,11 @@ const EmployeeLeaveForm = ({ employeeId }) => {
   const [requests, setRequests] = useState([]);
   const [loadingRequests, setLoadingRequests] = useState(true);
 
-  const apiBase = process.env.REACT_APP_API_BASE_URL || "http://localhost:5000";
   const token = localStorage.getItem("token");
 
   const fetchMyRequests = async () => {
     try {
-      const res = await fetch(`${apiBase}/leave/my-requests/${employeeId}`, {
+      const res = await fetch(`${API_BASE_URL}/leave/my-requests/${employeeId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -39,7 +39,7 @@ const EmployeeLeaveForm = ({ employeeId }) => {
     setLoading(true);
 
     try {
-      const res = await fetch(`${apiBase}/leave/submit`, {
+      const res = await fetch(`${API_BASE_URL}/leave/submit`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -109,8 +109,6 @@ const EmployeeLeaveForm = ({ employeeId }) => {
                 <option value="Unpaid Leave" className="bg-midnight text-white">Unpaid Leave</option>
               </select>
             </div>
-
-
 
             <div>
               <label className="text-text-muted text-[10px] font-black tracking-widest uppercase mb-2" style={{ display: "block" }}>Start Date</label>

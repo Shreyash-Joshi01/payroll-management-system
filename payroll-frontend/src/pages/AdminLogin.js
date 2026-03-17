@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiShield, FiLock, FiChevronLeft } from "react-icons/fi";
 import toast from "react-hot-toast";
+import { API_BASE_URL } from "../apiConfig";
 
 const AdminLogin = () => {
   const [email, setEmail] = useState("");
@@ -15,7 +15,7 @@ const AdminLogin = () => {
     const logToast = toast.loading("Authenticating admin...");
 
     try {
-      const res = await fetch(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000'}/auth/admin/login`, {
+      const res = await fetch(`${API_BASE_URL}/auth/admin/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),

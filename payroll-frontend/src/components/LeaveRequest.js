@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { FiCalendar, FiCheck, FiX, FiClock, FiMessageSquare } from "react-icons/fi";
+import { API_BASE_URL } from "../apiConfig";
 
 const LeaveRequest = () => {
   const [leaveRequests, setLeaveRequests] = useState([]);
@@ -15,7 +16,7 @@ const LeaveRequest = () => {
   const fetchLeaveRequests = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000'}/getLeaveRequests`, {
+      const res = await fetch(`${API_BASE_URL}/getLeaveRequests`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -34,7 +35,7 @@ const LeaveRequest = () => {
     try {
       const endpoint = status === 'Approved' ? 'approveLeave' : 'rejectLeave';
       const token = localStorage.getItem("token");
-      const res = await fetch(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000'}/${endpoint}/${requestId}`, {
+      const res = await fetch(`${API_BASE_URL}/${endpoint}/${requestId}`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",

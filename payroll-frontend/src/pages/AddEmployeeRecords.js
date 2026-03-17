@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { FiPlus, FiUser, FiLayers, FiFileText } from "react-icons/fi";
+import { FiPlus, FiSave, FiX, FiCalendar, FiDollarSign, FiUser, FiHash, FiLayers, FiFileText } from "react-icons/fi";
+import { API_BASE_URL } from "../apiConfig";
 
 const recordTypes = [
     { id: 'Payroll', label: 'Payroll Entry', fields: ['total_earnings', 'total_deductions', 'net_salary', 'payroll_date'] },
@@ -20,13 +21,16 @@ const AddEmployeeRecords = () => {
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        const token = localStorage.getItem('token');
-        fetch(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000'}/getAllEmployees`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        })
-            .then(res => res.json())
-            .then(data => setEmployees(data.employees || []))
-            .catch(() => toast.error("Unable to load employees"));
+        const fetchEmployees = async () => {
+            const token = localStorage.getItem('token');
+            fetch(`${API_BASE_URL}/getAllEmployees`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+                .then(res => res.json())
+                .then(data => setEmployees(data.employees || []))
+                .catch(() => toast.error("Unable to load employees"));
+        };
+        fetchEmployees();
     }, []);
 
     const handleSubmit = async (e) => {
@@ -40,7 +44,7 @@ const AddEmployeeRecords = () => {
 
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000'}/addRecord/${selectedRecordType}`, {
+            const res = await fetch(`${API_BASE_URL}/addRecord/${selectedRecordType}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
