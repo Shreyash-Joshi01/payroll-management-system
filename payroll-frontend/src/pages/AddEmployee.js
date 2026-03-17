@@ -90,15 +90,9 @@ const AddEmployee = () => {
                 onChange={handleChange}
                 className="w-full bg-elevated border border-neon rounded-xl px-4 py-3 text-white focus:outline-none focus:border-accent-primary transition-all"
               >
-<<<<<<< HEAD:payroll-frontend/src/pages/AddEmployee.js
                 <option value="Male" className="bg-midnight text-white">Male</option>
                 <option value="Female" className="bg-midnight text-white">Female</option>
                 <option value="Other" className="bg-midnight text-white">Other</option>
-=======
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
->>>>>>> fb57fde8cf0dbedbb755a4582cd9d2854e4afb27:payroll-management-system-main/payroll-frontend/src/pages/AddEmployee.js
               </select>
             </div>
           </div>
