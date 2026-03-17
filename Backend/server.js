@@ -14,8 +14,28 @@ import employeeRoutes from "./routes.js"; // Import the routes
 const app = express(); // ✅ Initialize app here, before using it
 
 // Middleware
-app.use(cors({ origin: ['http://localhost:3000', 'http://localhost:5173', 'https://payroll-management-system-liard.vercel.app'] }));
+app.use(cors({
+    origin: (origin, callback) => {
+        // Allow localhost and any .vercel.app subdomain
+        if (!origin || origin.startsWith('http://localhost') || origin.endsWith('.vercel.app')) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true
+}));
 app.use(json());
+
+// Path Normalization for Vercel /api rewrites
+app.use((req, res, next) => {
+    if (req.url.startsWith('/api')) {
+        req.url = req.url.replace(/^\/api/, '');
+    }
+    // Handle empty root after stripping /api
+    if (req.url === '') req.url = '/';
+    next();
+});
 
 // Request Logger (Claude Opus Style - Observability)
 app.use((req, res, next) => {
