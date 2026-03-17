@@ -11,9 +11,6 @@ if (!supabaseUrl || !supabaseKey) {
   console.error("Missing Supabase credentials in .env file");
 }
 
-console.log("Supabase URL:", supabaseUrl);
-console.log("Supabase Service Key Status:", supabaseServiceKey ? "Present (Length: " + supabaseServiceKey.length + ")" : "Missing");
-
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Use service role key for admin actions (like creating users)
@@ -26,6 +23,5 @@ export const supabaseAdmin = supabaseServiceKey
   })
   : null;
 
-console.log("Supabase Admin Client initialized:", !!supabaseAdmin);
-
+// Export
 export default supabase;
