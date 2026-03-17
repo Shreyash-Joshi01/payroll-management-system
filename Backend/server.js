@@ -5,18 +5,14 @@ if (process.env.NODE_ENV !== 'production') {
 }
 import express from "express";
 import cors from "cors";
-import pkg from "body-parser";
-const { json } = pkg;
-import db from "./database.js"; // Import the database connection
 
 import employeeRoutes from "./routes.js"; // Import the routes
 
-const app = express(); // ✅ Initialize app here, before using it
+const app = express();
 
-// Middleware
+// Middleware — Dynamic CORS for Vercel
 app.use(cors({
     origin: (origin, callback) => {
-        // Allow localhost and any .vercel.app subdomain
         if (!origin || origin.startsWith('http://localhost') || origin.endsWith('.vercel.app')) {
             callback(null, true);
         } else {
@@ -25,19 +21,18 @@ app.use(cors({
     },
     credentials: true
 }));
-app.use(json());
+app.use(express.json());
 
 // Path Normalization for Vercel /api rewrites
 app.use((req, res, next) => {
     if (req.url.startsWith('/api')) {
         req.url = req.url.replace(/^\/api/, '');
     }
-    // Handle empty root after stripping /api
     if (req.url === '') req.url = '/';
     next();
 });
 
-// Request Logger (Claude Opus Style - Observability)
+// Request Logger
 app.use((req, res, next) => {
     const timestamp = new Date().toISOString();
     res.on('finish', () => {
@@ -46,71 +41,14 @@ app.use((req, res, next) => {
     next();
 });
 
-// Add CSP headers
-app.use((req, res, next) => {
-    res.setHeader(
-        'Content-Security-Policy',
-        "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';"
-    );
-    next();
-});
-
-// Health Check & Diagnostics
-app.get("/", (req, res) => res.json({ status: "alive", message: "Payroll Backend Core is Active", port: 5005 }));
+// Health Check
+app.get("/", (req, res) => res.json({ status: "alive", message: "Payroll Backend Core is Active" }));
 app.get("/sys/health", (req, res) => res.json({ status: "alive", node: "Payroll Core v1.0.42" }));
 
-// Login Routes (Consolidated for Reliability)
-app.post("/auth/admin/login", async (req, res) => {
-    const { email, password } = req.body;
-    try {
-        const { data, error } = await db.auth.signInWithPassword({ email, password });
-        if (error) return res.status(401).json({ success: false, message: error.message });
-
-        if (data.user.user_metadata?.role !== 'Admin') {
-            await db.auth.signOut();
-            return res.status(403).json({ success: false, message: "Admin privileges required" });
-        }
-        res.json({
-            success: true,
-            token: data.session.access_token,
-            role: 'admin',
-            user: data.user
-        });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
-});
-
-app.post("/auth/employee/login", async (req, res) => {
-    const { email, password } = req.body;
-    try {
-        const { data, error } = await db.auth.signInWithPassword({ email, password });
-        if (error) return res.status(401).json({ success: false, message: error.message });
-
-        const { data: employee, error: empError } = await db
-            .from('employees')
-            .select('*, departments(department_name)')
-            .eq('supabase_user_id', data.user.id)
-            .single();
-
-        if (empError || !employee) {
-            return res.status(404).json({ success: false, message: "Employee profile synchronization failed" });
-        }
-        res.json({
-            success: true,
-            token: data.session.access_token,
-            role: 'employee',
-            user: employee
-        });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
-});
-
-// Other Routes
+// All Routes (login, employee CRUD, leave, etc.)
 app.use("/", employeeRoutes);
 
-// Start the server
+// Start the server (local dev only)
 const PORT = process.env.BACKEND_PORT || 5000;
 if (process.env.NODE_ENV !== "production") {
     app.listen(PORT, () => {
