@@ -1,7 +1,9 @@
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 import path from 'path';
-dotenv.config({ path: path.resolve('../.env') });
+if (process.env.NODE_ENV !== 'production') {
+    dotenv.config({ path: path.resolve('../.env') });
+}
 
 const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp.gmail.com', // fallback to Gmail
