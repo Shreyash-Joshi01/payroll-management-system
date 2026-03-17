@@ -1,6 +1,8 @@
 import dotenv from "dotenv";
 import path from "path";
-dotenv.config({ path: path.resolve("../.env") });
+if (process.env.NODE_ENV !== 'production') {
+    dotenv.config({ path: path.resolve("../.env") });
+}
 import express from "express";
 import cors from "cors";
 import pkg from "body-parser";
