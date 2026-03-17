@@ -2,10 +2,6 @@
   "version": 2,
   "builds": [
     {
-      "src": "Backend/server.js",
-      "use": "@vercel/node"
-    },
-    {
       "src": "payroll-frontend/package.json",
       "use": "@vercel/static-build",
       "config": {
@@ -16,7 +12,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/Backend/server.js"
+      "destination": "/api"
     },
     {
       "source": "/(.*)",
