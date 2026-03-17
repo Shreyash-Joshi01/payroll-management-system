@@ -14,7 +14,10 @@ const LeaveRequest = () => {
 
   const fetchLeaveRequests = async () => {
     try {
-      const res = await fetch('http://localhost:5000/getLeaveRequests');
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000'}/getLeaveRequests`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       const data = await res.json();
       setLeaveRequests(data.leaveRequests || []);
     } catch (error) {
@@ -30,9 +33,13 @@ const LeaveRequest = () => {
 
     try {
       const endpoint = status === 'Approved' ? 'approveLeave' : 'rejectLeave';
-      const res = await fetch(`http://localhost:5000/${endpoint}/${requestId}`, {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000'}/${endpoint}/${requestId}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
         body: JSON.stringify({ notes: approvalNotes })
       });
 

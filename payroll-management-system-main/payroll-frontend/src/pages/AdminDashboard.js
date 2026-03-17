@@ -44,10 +44,10 @@ const AdminDashboard = () => {
               onClick={() => setSelected(item.id)}
               className={`sidebar-btn ${selected === item.id ? 'active' : ''}`}
             >
-              <div className="icon-box">
+              <div className="icon-box" style={{ flexShrink: 0 }}>
                 {item.icon}
               </div>
-              <span className="font-black">{item.label}</span>
+              <span className="font-black" style={{ whiteSpace: 'nowrap' }}>{item.label}</span>
             </button>
           ))}
         </nav>
@@ -76,7 +76,7 @@ const AdminDashboard = () => {
             </div>
             <div>
               <p className="text-white text-xs font-black uppercase tracking-widest">{adminData.first_name} {adminData.last_name}</p>
-              <p className="text-cyan text-[10px] font-bold uppercase tracking-widest">System Override</p>
+              <p className="text-cyan text-[10px] font-bold uppercase tracking-widest">Administrator</p>
             </div>
           </div>
         </header>

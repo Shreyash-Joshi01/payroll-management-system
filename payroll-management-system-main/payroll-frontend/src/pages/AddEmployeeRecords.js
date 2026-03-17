@@ -53,7 +53,8 @@ const AddEmployeeRecords = () => {
                 toast.success("Record documented successfully", { id: loadToast });
                 setFormData({});
             } else {
-                toast.error("Process failed", { id: loadToast });
+                const errData = await res.json().catch(() => ({}));
+                toast.error(errData.error || "Process failed", { id: loadToast });
             }
         } catch {
             toast.error("Network instability", { id: loadToast });

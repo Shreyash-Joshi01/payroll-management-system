@@ -146,15 +146,15 @@ const ViewEmployeeDetails = () => {
 
       <div className="glass rounded-3xl overflow-hidden animate-fade-in">
         <div className="overflow-x-auto">
-          <table className="w-full text-left">
+          <table className="w-full text-left" style={{ tableLayout: 'fixed' }}>
             <thead>
               <tr className="bg-midnight text-xs text-secondary uppercase tracking-widest border-b border-neon">
-                <th className="px-6 py-5 font-black">ID</th>
-                <th className="px-6 py-5 font-black">Member</th>
-                <th className="px-6 py-5 font-black">Department</th>
-                <th className="px-6 py-5 font-black">Salary</th>
-                <th className="px-6 py-5 font-black text-cyan">Status</th>
-                <th className="px-6 py-5 font-black text-right">Action</th>
+                <th className="px-6 py-5 font-black" style={{ width: '8%' }}>ID</th>
+                <th className="px-6 py-5 font-black" style={{ width: '22%' }}>Member</th>
+                <th className="px-6 py-5 font-black" style={{ width: '20%' }}>Department</th>
+                <th className="px-6 py-5 font-black" style={{ width: '18%' }}>Salary</th>
+                <th className="px-6 py-5 font-black text-cyan" style={{ width: '15%' }}>Status</th>
+                <th className="px-6 py-5 font-black text-right" style={{ width: '17%' }}>Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neon">
@@ -172,7 +172,7 @@ const ViewEmployeeDetails = () => {
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-5">{emp.department_name || "N/A"}</td>
+                  <td className="px-6 py-5">{emp.departments?.department_name || "N/A"}</td>
                   <td className="px-6 py-5 font-medium text-white">₹{emp.salary.toLocaleString()}</td>
                   <td className="px-6 py-5">
                     <span className={`px-2 py-1 rounded-md text-xs font-black uppercase ${emp.status === 'Active' ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'

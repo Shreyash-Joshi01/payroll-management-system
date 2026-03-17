@@ -26,23 +26,26 @@ const Login = () => {
         setLoading(true);
 
         try {
-            const apiBase = 'http://localhost:5005';
+            const apiBase = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
             const endpoint = role === 'admin'
                 ? `${apiBase}/auth/admin/login`
                 : `${apiBase}/auth/employee/login`;
 
             const response = await axios.post(endpoint, { email, password });
 
-            if (response.data.token) {
-                localStorage.setItem('token', response.data.token);
-                localStorage.setItem('role', response.data.role);
-                localStorage.setItem('userData', JSON.stringify(response.data.user || response.data.admin));
+            if (response.data.success) {
+                const token = response.data.session?.access_token || response.data.token;
+                localStorage.setItem('token', token);
+                localStorage.setItem('role', role);
+                localStorage.setItem('userData', JSON.stringify(response.data.user || response.data.employee));
 
                 toast.success(`Welcome ${role === 'admin' ? 'Commander' : 'Personnel'}!`);
 
                 setTimeout(() => {
                     navigate(role === 'admin' ? '/admin-dashboard' : '/employee-dashboard');
                 }, 800);
+            } else {
+                toast.error(response.data.message || "Neural link failure: Invalid credentials");
             }
         } catch (error) {
             toast.error(error.response?.data?.error || "Neural link failure: Invalid credentials");

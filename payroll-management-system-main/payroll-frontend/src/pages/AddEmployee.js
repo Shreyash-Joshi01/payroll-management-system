@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import toast from "react-hot-toast";
-import { FiUser, FiMail, FiPhone, FiCalendar, FiBriefcase, FiMapPin, FiLock, FiCreditCard } from "react-icons/fi";
+import { FiUser, FiMail, FiPhone, FiCalendar, FiBriefcase, FiMapPin, FiCreditCard, FiLock } from "react-icons/fi";
 
 const initialState = {
-  first_name: "", last_name: "", email: "", contact_number: "", date_of_birth: "",
+  first_name: "", last_name: "", email: "", password: "", confirm_password: "",
+  contact_number: "", date_of_birth: "",
   job_title: "", gender: "Male", address: "", department_id: "", salary: "",
-  hire_date: "", status: "Active", password: "", bank_name: "",
+  hire_date: "", status: "Active", bank_name: "",
   account_number: "", ifsc_code: "", role_name: "Employee",
   grade_name: "", minimum_salary: "", maximum_salary: ""
 };
@@ -21,15 +22,24 @@ const AddEmployee = () => {
 
   const handleSubmit = async e => {
     e.preventDefault();
+
+    if (form.password.length < 6) {
+      return toast.error("Password must be at least 6 characters.");
+    }
+    if (form.password !== form.confirm_password) {
+      return toast.error("Passwords do not match.");
+    }
+
     setLoading(true);
     const loadingToast = toast.loading("Registering employee...");
 
     try {
+      const { confirm_password, ...submitData } = form;
       const res = await fetch(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000'}/auth/registerEmployee`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...form,
+          ...submitData,
           department_id: Number(form.department_id),
           salary: Number(form.salary),
           minimum_salary: Number(form.minimum_salary),
@@ -39,7 +49,7 @@ const AddEmployee = () => {
 
       const data = await res.json();
       if (res.ok) {
-        toast.success("Employee added successfully!", { id: loadingToast });
+        toast.success(data.emailNote || "Employee registered! Credentials emailed.", { id: loadingToast });
         setForm(initialState);
       } else {
         toast.error(data.error || "Failed to add employee", { id: loadingToast });
@@ -69,6 +79,8 @@ const AddEmployee = () => {
             <Input label="Last Name" name="last_name" value={form.last_name} onChange={handleChange} required />
             <Input label="Email" name="email" type="email" value={form.email} onChange={handleChange} required />
             <Input label="Contact Number" name="contact_number" value={form.contact_number} onChange={handleChange} required />
+            <Input label="Password" name="password" type="password" value={form.password} onChange={handleChange} required placeholder="Min 6 characters" />
+            <Input label="Confirm Password" name="confirm_password" type="password" value={form.confirm_password} onChange={handleChange} required />
             <Input label="Date of Birth" name="date_of_birth" type="date" value={form.date_of_birth} onChange={handleChange} required />
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-bold text-text-muted uppercase px-1">Gender</label>
@@ -111,7 +123,7 @@ const AddEmployee = () => {
             <Input label="Role" name="role_name" value={form.role_name} onChange={handleChange} required />
             <Input label="Min Salary Range" name="minimum_salary" type="number" value={form.minimum_salary} onChange={handleChange} required />
             <Input label="Max Salary Range" name="maximum_salary" type="number" value={form.maximum_salary} onChange={handleChange} required />
-            <Input label="Account Password" name="password" type="password" value={form.password} onChange={handleChange} required />
+
           </div>
         </section>
 
