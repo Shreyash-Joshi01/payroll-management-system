@@ -12,7 +12,7 @@ import employeeRoutes from "./routes.js"; // Import the routes
 const app = express(); // ✅ Initialize app here, before using it
 
 // Middleware
-app.use(cors({ origin: ['http://localhost:3000', 'http://localhost:5173'] }));
+app.use(cors({ origin: ['http://localhost:3000', 'http://localhost:5173', 'https://payroll-management-system-liard.vercel.app'] }));
 app.use(json());
 
 // Request Logger (Claude Opus Style - Observability)

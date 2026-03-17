@@ -23,7 +23,7 @@ This project is pre-configured to be deployed as a single unit on Vercel leverag
 1. Connect your repository to Vercel.
 2. Vercel will automatically detect `vercel.json` for routing.
 3. Go to your Vercel Project Settings > Environment Variables, and add all variables from your local `.env`. 
-   > **Important:** Ensure `REACT_APP_API_BASE_URL` is set to `/api` in Vercel to correctly route frontend requests to the serverless backend.
+   > **Important:** Ensure `REACT_APP_API_BASE_URL` is set to `/api` in Vercel to correctly route frontend requests to the serverless backend. If this is not set, the app will try to connect to `localhost:5000` and fail.
 4. Deploy!
 
 ## Credits
