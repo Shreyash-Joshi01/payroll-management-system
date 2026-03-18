@@ -929,12 +929,91 @@ input:-webkit-autofill:active {
 
 @media (max-width: 768px) {
   .landing-title {
-    font-size: 3rem;
+    font-size: 3.5rem;
+  }
+
+  .landing-subtitle {
+    font-size: 0.8rem;
   }
 
   .landing-cards {
     flex-direction: column;
+    gap: 1.5rem;
   }
+
+  .landing-container {
+    padding: 2rem 1rem;
+  }
+
+  .glass-card {
+    min-height: auto !important;
+    padding: 1.5rem !important;
+  }
+
+  /* Typography Scaling */
+  .text-4xl {
+    font-size: 1.75rem;
+  }
+  .text-3xl {
+    font-size: 1.5rem;
+  }
+  .text-2xl {
+    font-size: 1.25rem;
+  }
+  .text-xl {
+    font-size: 1.125rem;
+  }
+
+  /* Spacing Scaling */
+  .p-10 {
+    padding: 1.25rem;
+  }
+  .p-8 {
+    padding: 1rem;
+  }
+  .p-6 {
+    padding: 0.75rem;
+  }
+  .gap-8 {
+    gap: 1.25rem;
+  }
+  .gap-6 {
+    gap: 1rem;
+  }
+
+  /* Admin Sidebar Collapse */
+  .w-72 {
+    width: 4.5rem;
+  }
+  
+  .sidebar-btn span {
+    display: none;
+  }
+  
+  .sidebar-btn {
+    padding: 0.75rem;
+    justify-content: center;
+  }
+
+  /* Hide the Core.Logic text on small screens so it doesn't overlap Main Content */
+  aside.w-72 .mb-10.px-2 {
+    display: none;
+  }
+
+  /* Top Right Admin Info simplification */
+  .flex.items-center.gap-4.bg-surface p {
+    display: none;
+  }
+  
+  /* Modal responsive padding */
+  .max-w-lg {
+    max-width: 90vw;
+  }
+}
+
+/* Ensure flex children don't burst their containers in flex layouts */
+main.flex-1 {
+  min-width: 0;
 }
 
 /* Global Theme Overrides for Landing & Login */

@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { motion } from "framer-motion";
 import AddEmployee from "./AddEmployee";
 import UpdateDeleteEmployee from "./UpdateDeleteEmployee";
 import ViewEmployeeDetails from "./ViewEmployeeDetails";
@@ -27,7 +26,7 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-midnight text-primary flex">
+    <div className="h-screen w-full overflow-hidden bg-midnight text-primary flex">
       {/* Sidebar */}
       <aside className="w-72 bg-surface border-r border-neon flex flex-col p-6">
         <div className="mb-10 px-2">
@@ -83,8 +82,8 @@ const AdminDashboard = () => {
           </div>
         </header>
 
-        <div className="animate-fade-in shadow-neon">
-          <div className="bg-surface rounded-xl p-8 min-h-600 border border-neon">
+        <div className="animate-fade-in shadow-neon w-full max-w-full">
+          <div className="bg-surface rounded-xl p-4 md:p-8 min-h-600 border border-neon w-full max-w-full overflow-x-hidden">
             {selected === "add" && <AddEmployee />}
             {selected === "update" && <UpdateDeleteEmployee />}
             {selected === "view" && <ViewEmployeeDetails />}

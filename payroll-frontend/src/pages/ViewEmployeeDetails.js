@@ -122,7 +122,7 @@ const ViewEmployeeDetails = () => {
   );
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 w-full max-w-full min-w-0">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold text-white">Employee Directory</h2>
@@ -145,9 +145,9 @@ const ViewEmployeeDetails = () => {
         </div>
       </div>
 
-      <div className="glass rounded-3xl overflow-hidden animate-fade-in">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left" style={{ tableLayout: 'fixed' }}>
+      <div className="glass rounded-3xl overflow-x-auto animate-fade-in w-full max-w-full">
+        <div className="w-full max-w-full pb-2 min-w-[800px]">
+          <table className="w-full text-left" style={{ tableLayout: 'fixed', minWidth: '800px' }}>
             <thead>
               <tr className="bg-midnight text-xs text-secondary uppercase tracking-widest border-b border-neon">
                 <th className="px-6 py-5 font-black" style={{ width: '8%' }}>ID</th>
